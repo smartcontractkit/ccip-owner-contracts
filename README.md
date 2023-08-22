@@ -14,6 +14,8 @@ Once you have Go running, `forge test --ffi` should do the trick.
 
 Format code with `forge fmt`.
 
+Generate a code coverate report by running `./coverage.sh`.
+
 ## Design Considerations
 
 The `CallProxy`, `ManyChainMultiSig`, `RBACTimelock` contracts are all part of a system of `owner` contracts that is supposed to administer other contracts (henceforth referred to as `OWNED`). `OWNED` contracts represent any system of contracts that (1) have an `owner` or similar role (e.g. using OpenZeppelin's `OwnableInterface`) and that (2) are potentially deployed across multiple chains.
