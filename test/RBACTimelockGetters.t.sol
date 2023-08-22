@@ -50,7 +50,7 @@ contract RBACTimelockIsOperationPendingTest is BaseTest {
         assertEq(isOperationPending, false);
     }
 
-    function test_trueIfScheduledOperatonNotYetExecuted() public {
+    function test_trueIfScheduledOperationNotYetExecuted() public {
         vm.prank(PROPOSER_ONE);
         s_timelock.scheduleBatch(
             _singletonCalls(

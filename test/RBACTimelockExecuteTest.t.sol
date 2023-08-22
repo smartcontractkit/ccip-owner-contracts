@@ -170,7 +170,7 @@ contract RBACTimelockExecuteBatchTest is BaseTest {
     function _executeBatchedOperation(address executor) internal {
         vm.prank(PROPOSER_ONE);
 
-        // Schedule batch executon
+        // Schedule batch execution
         s_timelock.scheduleBatch(s_calls, NO_PREDECESSOR, EMPTY_SALT, MIN_DELAY);
 
         vm.warp(block.timestamp + MIN_DELAY);

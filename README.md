@@ -1,6 +1,6 @@
 # Chainlink CCIP Owner Contracts
 
-This repo contains a set of contracts used for admistering Chainlink contracts,
+This repo contains a set of contracts used for administering Chainlink contracts,
 most notably [CCIP](https://chain.link/cross-chain).
 
 The contracts in this repo are considered production-grade and have been
@@ -14,7 +14,7 @@ Once you have Go running, `forge test --ffi` should do the trick.
 
 Format code with `forge fmt`.
 
-Generate a code coverate report by running `./coverage.sh`.
+Generate a code coverage report by running `./coverage.sh`.
 
 ## Design Considerations
 
@@ -64,7 +64,7 @@ to withdraw funds stored in `OWNED` contracts before they can be executed.
 We may use `RBACTimelock.blockFunctionSelector` to prevent specific functions on the
 `OWNED` contracts from being called through the regular propose-execute flow.
 
-`RBACTimelock`` is based on an OpenZeppelin contract. We intentionally use the
+`RBACTimelock` is based on an OpenZeppelin contract. We intentionally use the
 old `require` syntax (and some other old techniques) in `RBACTimelock` to keep
 the diff vs the original OZ contract smaller.
 

@@ -249,7 +249,7 @@ contract ManyChainMultiSigSetOverrideRootTest is ManyChainMultiSigSetRootTest {
         callSetRoot(args);
     }
 
-    function test_successWhenNoOverideAfterEmptyRoot() public {
+    function test_successWhenNoOverrideAfterEmptyRoot() public {
         ManyChainMultiSig.RootMetadata memory newRootMetadata = s_initialTestRootMetadata;
         // we already have a root set during setUp(), which we're overriding
         // in this test
