@@ -3,8 +3,8 @@
 This repo contains a set of contracts used for administering Chainlink contracts,
 most notably [CCIP](https://chain.link/cross-chain).
 
-The contracts in this repo are considered production-grade and have been
-reviewed as part of a [code4rena contest](https://code4rena.com/contests/2023-07-chainlink-cross-chain-contract-administration-multi-signature-contract-timelock-and-call-proxies#top).
+The contracts in this repo's `main` branch are considered production-grade and
+have been reviewed as part of a [code4rena contest](https://code4rena.com/contests/2023-07-chainlink-cross-chain-contract-administration-multi-signature-contract-timelock-and-call-proxies#top).
 
 ## Development
 
