@@ -132,10 +132,7 @@ contract RBACTimelock is AccessControlEnumerable, IERC721Receiver, IERC1155Recei
      * - `proposers`: accounts to be granted proposer role
      * - `executors`: accounts to be granted executor role
      * - `cancellers`: accounts to be granted canceller role
-     *
-     * The admin is the most powerful role. Only an admin can manage membership
-     * of all roles. Only an admin can bypass restrictions like the timelock
-     * minDelay and blocked function selectors.
+     * - `bypassers`: accounts to be granted bypasser role
      */
     constructor(
         uint256 minDelay,
