@@ -12,7 +12,7 @@ Licensor:             SmartContract Chainlink Limited SEZC
 Licensed Work:     	  CCIP Owner Contracts v1.0
 The Licensed Work is (c) 2023 SmartContract Chainlink Limited SEZC
 
-Additional Use Grant: Any uses listed and defined at [v1.0-CCIP-License-grants](./v1.0-CCIP-License-grants.md)
+Additional Use Grant: Any uses listed and defined at [v1.0-CCIP-License-grants](https://github.com/smartcontractkit/ccip/blob/ccip-develop/contracts/src/v0.8/ccip/v1.0-CCIP-License-grants.md)
 
 Change Date:       	  May 23, 2027
 
