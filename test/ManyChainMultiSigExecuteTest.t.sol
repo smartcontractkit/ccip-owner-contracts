@@ -112,7 +112,7 @@ contract ManyChainMultiSigExecuteTest is ManyChainMultiSigBaseSetRootAndExecuteT
         s_testExposedManyChainMultiSig.execute(t, proof);
     }
 
-    function test_value() public {
+    function test_value_indirect() public {
         assertEq(address(s_testExposedManyChainMultiSig).balance, 0);
 
         s_testExposedManyChainMultiSig.setOpCount(s_testOps[VALUE_OP_INDEX].nonce);
@@ -132,6 +132,24 @@ contract ManyChainMultiSigExecuteTest is ManyChainMultiSigBaseSetRootAndExecuteT
 
         // Execute op sending 1 wei to receiver
         s_testExposedManyChainMultiSig.execute(s_testOps[VALUE_OP_INDEX], proof);
+        assertEq(address(s_testExposedManyChainMultiSig).balance, 0);
+        assertEq(s_testOps[VALUE_OP_INDEX].to.balance, 1);
+    }
+
+    function test_value_direct() public {
+        assertEq(address(s_testExposedManyChainMultiSig).balance, 0);
+
+        s_testExposedManyChainMultiSig.setOpCount(s_testOps[VALUE_OP_INDEX].nonce);
+        bytes32[] memory proof =
+            computeProofForLeaf(s_testLeavesInTree, getLeafIndexOfOp(VALUE_OP_INDEX));
+
+        // No ether present in ManyChainMultiSig
+        vm.expectRevert();
+        s_testExposedManyChainMultiSig.execute(s_testOps[VALUE_OP_INDEX], proof);
+
+        // Send directly via execute
+        vm.deal(address(this), 1);
+        s_testExposedManyChainMultiSig.execute{value: 1}(s_testOps[VALUE_OP_INDEX], proof);
         assertEq(address(s_testExposedManyChainMultiSig).balance, 0);
         assertEq(s_testOps[VALUE_OP_INDEX].to.balance, 1);
     }

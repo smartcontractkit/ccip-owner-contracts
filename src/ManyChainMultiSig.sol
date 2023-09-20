@@ -337,7 +337,7 @@ contract ManyChainMultiSig is Ownable2Step {
     ///
     /// @dev the gas limit of the call can be freely determined by the caller of this function.
     /// We expect callees to revert if they run out of gas.
-    function execute(Op calldata op, bytes32[] calldata proof) external {
+    function execute(Op calldata op, bytes32[] calldata proof) external payable {
         ExpiringRootAndOpCount memory currentExpiringRootAndOpCount = s_expiringRootAndOpCount;
 
         if (s_rootMetadata.postOpCount <= currentExpiringRootAndOpCount.opCount) {
