@@ -282,7 +282,7 @@ contract RBACTimelock is AccessControlEnumerable, IERC721Receiver, IERC1155Recei
     }
 
     /**
-     * @dev Schedule an operation that is to becomes valid after a given delay.
+     * @dev Schedule an operation that becomes valid after a given delay.
      */
     function _schedule(bytes32 id, uint256 delay) private {
         require(!isOperation(id), "RBACTimelock: operation already scheduled");
