@@ -59,7 +59,7 @@ We expect to set `RBACTimelock.minDelay` and `delay` to ~ 24 hours, but in gener
 between 1 hour and 1 month should be supported.
 This enables anyone to inspect configuration changes to the `OWNED` contracts before
 they take effect. For example, a user that disagrees with a configuration change might choose
-to withdraw funds stored in `OWNED` contracts before they can be executed. 
+to withdraw funds stored in `OWNED` contracts before they can be executed.
 
 We may use `RBACTimelock.blockFunctionSelector` to prevent specific functions on the
 `OWNED` contracts from being called through the regular propose-execute flow.
@@ -86,7 +86,7 @@ Unlike standard multi-sig contracts, `ManyChainMultiSig` supports signing many t
 targeting many chains with a single set of signatures. (We currently only target EVM chains
 and all EVM chains support the same ECDSA secp256k1 standard.) This is useful for administering
 systems of contracts spanning many chains without increasing signing overhead linearly with the
-number of supported chains. We expect to use the same set of EOA signers across many chains.Consequently, `ManyChainMultiSig` only supports EOAs as signers, *not* other smart contracts.
+number of supported chains. We expect to use the same set of EOA signers across many chains. Consequently, `ManyChainMultiSig` only supports EOAs as signers, *not* other smart contracts.
 Similar to the rest of the system, *anyone* who can furnish a correct Merkle proof is allowed to execute authorized calls on the `ManyChainMultiSig`, including a potential adversary. The
 adversary will be able to control the gas price and gas amount for the execution.
 
@@ -170,12 +170,12 @@ aren't very significant since we don't envision setting new roots all that frequ
 We are aware of a [proposal](https://ethereum-magicians.org/t/eip-2294-explicit-bound-to-chain-id/11090)
 to bound chain ids to 64 bits, but it is still unresolved.
 
-We choose the tried-and-true OpenZeppelin Merkle tree. We remain conservative and don't make use of 
-multiproofs for the sake of simplicity. The same KISS approach also leads us to not make use of a 
-Merkle tries with support for storing key-value-pairs (e.g. sparse Merkle trees). Such tries would 
-enable us to compute a unique key for each Op, preventing e.g. two Ops with the same nonce and 
-multisig contract from being included in the trie. However, the practical benefit of doing so seems 
-limited: a faulty set of signers can take far more damaging actions that putting two conflicting 
+We choose the tried-and-true OpenZeppelin Merkle tree. We remain conservative and don't make use of
+multiproofs for the sake of simplicity. The same KISS approach also leads us to not make use of
+Merkle tries with support for storing key-value-pairs (e.g. sparse Merkle trees). Such tries would
+enable us to compute a unique key for each Op, preventing e.g. two Ops with the same nonce and
+multisig contract from being included in the trie. However, the practical benefit of doing so seems
+limited: a faulty set of signers can take far more damaging actions that putting two conflicting
 transactions in the trie.
 
 ### Propose-and-Execute Flow
