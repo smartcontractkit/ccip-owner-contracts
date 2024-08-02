@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo " ┌──────────────────────────────────────────────┐"
+echo " │       Compiling OWNER contracts...      │"
+echo " └──────────────────────────────────────────────┘"
+
+SOLC_VERSION="0.8.19"
+OPTIMIZE_RUNS=1000000
+
+ROOT="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; cd ../../ && pwd -P )"
+
+solc-select install $SOLC_VERSION
+solc-select use $SOLC_VERSION
+export SOLC_VERSION=$SOLC_VERSION
+
+
+compileContract () {
+  local contract
+  contract=$(basename "$1" ".sol")
+
+  solc openzeppelin-contracts/="$ROOT"/lib/openzeppelin-contracts/contracts/ --overwrite --optimize --optimize-runs $OPTIMIZE_RUNS --metadata-hash none \
+      -o "$ROOT"/gethwrappers/abi/"$contract" \
+      --abi --bin --allow-paths "$ROOT"/src,"$ROOT"/lib \
+      "$ROOT"/src/"$1"
+}
+
+compileContract CallProxy.sol
+compileContract ManyChainMultiSig.sol
+compileContract RBACTimelock.sol

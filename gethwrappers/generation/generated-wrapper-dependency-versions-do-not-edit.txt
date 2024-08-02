@@ -1,0 +1,4 @@
+GETH_VERSION: 1.13.8
+call_proxy_wrapper: abi/CallProxy/CallProxy.abi abi/CallProxy/CallProxy.bin c05a17bc90d3f8f9869206040a4cb2cc08518aa6f1f63ead3e63d602eaecf0f1
+many_chain_multi_sig_wrapper: abi/ManyChainMultiSig/ManyChainMultiSig.abi abi/ManyChainMultiSig/ManyChainMultiSig.bin 021488eb68f4612c42008756fe9cb974132313e561b4dfa5e181ffa5bf19b2c8
+rbac_timelock_wrapper: abi/RBACTimelock/RBACTimelock.abi abi/RBACTimelock/RBACTimelock.bin 86ef5a17c72224aeea0f8c9f5c0a2e7c04129c38326051eb7f0b6b22901c1ff2
