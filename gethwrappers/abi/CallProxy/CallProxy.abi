@@ -1,1 +1,0 @@
-[{"inputs":[{"internalType":"address","name":"target","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"target","type":"address"}],"name":"TargetSet","type":"event"},{"stateMutability":"payable","type":"fallback"}]
