@@ -17,6 +17,10 @@ Foundry is for testing
 ```bash
 curl -L https://foundry.paradigm.xyz | bash
 ```
+re-`source` shell like `source /Users/<user>/.zshenv` then
+```bash
+foundryup
+```
 Run the foundry tests so you also get the `openzeppelin-contracts` imported to `/lib`
 ```bash
 forge test --ffi
