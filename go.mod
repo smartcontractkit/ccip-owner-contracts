@@ -1,4 +1,4 @@
-module testCommands
+module github.com/smartcontractkit/ccip-owner-contracts
 
 go 1.22.4
 
