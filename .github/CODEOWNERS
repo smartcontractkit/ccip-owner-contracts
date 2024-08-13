@@ -5,5 +5,6 @@
 # Root
 * @smartcontractkit/research
 
-# Chains
+# Tooling
+/tools @smartcontractkit/ccip @smartcontractkit/research
 /gethwrappers @smartcontractkit/ccip @smartcontractkit/research

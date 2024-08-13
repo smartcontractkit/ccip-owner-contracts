@@ -15,9 +15,9 @@ abigen --version | grep -F "abigen version $abigen_version-stable" >/dev/null ||
 )
 
 improved_abigen () {
-  jq .abi ../out/$1.sol/$1.json > ../out/$1.sol/$1.abi
-  jq --raw-output .bytecode.object ../out/$1.sol/$1.json > ../out/$1.sol/$1.bin
-  go run ./generate/wrap.go ../out/$1.sol/$1.abi ../out/$1.sol/$1.bin $1 gethwrappers
+  jq .abi ../../out/$1.sol/$1.json > ../../out/$1.sol/$1.abi
+  jq --raw-output .bytecode.object ../../out/$1.sol/$1.json > ../../out/$1.sol/$1.bin
+  go run ./generate/wrap.go ../../out/$1.sol/$1.abi ../../out/$1.sol/$1.bin $1 gethwrappers
 }
 
 forge build

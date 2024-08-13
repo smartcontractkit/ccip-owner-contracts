@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/smartcontractkit/ccip-owner-contracts/gethwrappers"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 )
 
 func main() {
