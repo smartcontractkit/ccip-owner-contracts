@@ -18,7 +18,7 @@ const (
 
 type MCMSWithTimelockChainMetadata struct {
 	executable.ExecutableMCMSChainMetadata
-	TimelockAddress string `json:"timelockAddress"`
+	TimelockAddress common.Address `json:"timelockAddress"`
 }
 
 type TimelockOperation string
@@ -30,7 +30,7 @@ const (
 )
 
 type MCMSWithTimelockProposal struct {
-	BaseMCMSProposal
+	baseMCMSProposal
 
 	Operation TimelockOperation `json:"operation"` // Always 'schedule', 'cancel', or 'bypass'
 
@@ -45,8 +45,8 @@ type MCMSWithTimelockProposal struct {
 	Transactions []DetailedBatchChainOperation `json:"transactions"`
 }
 
-func (m MCMSWithTimelockProposal) Validate() error {
-	if err := m.BaseMCMSProposal.Validate(); err != nil {
+func (m *MCMSWithTimelockProposal) Validate() error {
+	if err := m.baseMCMSProposal.Validate(); err != nil {
 		return err
 	}
 
@@ -69,8 +69,8 @@ func (m MCMSWithTimelockProposal) Validate() error {
 	return nil
 }
 
-func (m MCMSWithTimelockProposal) ToExecutableMCMSProposal() (executable.ExecutableMCMSProposal, error) {
-	raw := m.BaseMCMSProposal.ToExecutableMCMSProposal()
+func (m *MCMSWithTimelockProposal) ToExecutableMCMSProposal() (executable.ExecutableMCMSProposal, error) {
+	raw := m.baseMCMSProposal.ToExecutableMCMSProposal()
 
 	predecessorMap := make(map[string][32]byte)
 	for chain := range m.ChainMetadata {
@@ -81,7 +81,7 @@ func (m MCMSWithTimelockProposal) ToExecutableMCMSProposal() (executable.Executa
 		calls := make([]owner.RBACTimelockCall, 0)
 		for _, op := range t.Batch {
 			calls = append(calls, owner.RBACTimelockCall{
-				Target: common.HexToAddress(op.To),
+				Target: op.To,
 				Data:   common.FromHex(op.Data),
 				Value:  big.NewInt(int64(op.Value)),
 			})

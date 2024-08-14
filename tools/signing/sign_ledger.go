@@ -58,7 +58,10 @@ func signLedger() {
 	// Sign the payload
 	sig, _ := wallet.SignData(account, "", payload)
 	unmarshalledSig := executable.Signature{}
-	json.Unmarshal(sig, &unmarshalledSig)
+	err = json.Unmarshal(sig, &unmarshalledSig)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Add signature to proposal
 	proposal.AddSignature(unmarshalledSig)

@@ -5,46 +5,29 @@ import (
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/executable"
 )
 
-type BaseMCMSProposal struct {
-	executable.ExecutableMCMSProposalBase
+// BaseMCMSProposal is the base struct for all MCMS proposals
+// Note: this type should never be utilized directly which is why it is private
+type baseMCMSProposal struct {
+	executable.ExecutableMCMSProposal
 
 	// This is intended to be displayed as-is to signers, to give them
 	// context for the change. File authors should templatize strings for
 	// this purpose in their pipelines.
 	Description string `json:"description"`
 
-	// Map of chain identifier to chain metadata
-	ChainMetadata map[string]executable.ExecutableMCMSChainMetadata `json:"chainMetadata"`
-
 	// Operations to be executed
 	Transactions []ChainOperation `json:"transactions"`
 }
 
-func (m BaseMCMSProposal) Validate() error {
-	if m.Version == "" {
-		return &errors.ErrInvalidVersion{
-			ReceivedVersion: m.Version,
-		}
-	}
-
-	if m.ValidUntil == "" {
-		return &errors.ErrInvalidValidUntil{
-			ReceivedValidUntil: m.ValidUntil,
-		}
+func (m *baseMCMSProposal) Validate() error {
+	if err := m.ExecutableMCMSProposal.ExecutableMCMSProposalBase.Validate(); err != nil {
+		return err
 	}
 
 	if m.Description == "" {
 		return &errors.ErrInvalidDescription{
 			ReceivedDescription: m.Description,
 		}
-	}
-
-	if len(m.ChainMetadata) == 0 {
-		return &errors.ErrNoChainMetadata{}
-	}
-
-	if len(m.Transactions) == 0 {
-		return &errors.ErrNoTransactions{}
 	}
 
 	// Validate all chains in transactions have an entry in chain metadata
@@ -58,15 +41,13 @@ func (m BaseMCMSProposal) Validate() error {
 	return nil
 }
 
-func (m BaseMCMSProposal) AddSignature(sig executable.Signature) error {
+func (m *baseMCMSProposal) AddSignature(sig executable.Signature) {
 	m.Signatures = append(m.Signatures, sig)
-	return nil
 }
 
-func (m BaseMCMSProposal) ToExecutableMCMSProposal() executable.ExecutableMCMSProposal {
+func (m *baseMCMSProposal) ToExecutableMCMSProposal() executable.ExecutableMCMSProposal {
 	raw := executable.ExecutableMCMSProposal{
 		ExecutableMCMSProposalBase: m.ExecutableMCMSProposalBase,
-		ChainMetadata:              make(map[string]executable.ExecutableMCMSChainMetadata),
 		Transactions:               make([]executable.ChainOperation, 0),
 	}
 

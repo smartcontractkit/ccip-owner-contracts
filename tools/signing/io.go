@@ -12,16 +12,16 @@ func ProposalFromFile(proposalType managed.MCMSProposalType, filePath string) (m
 	var out managed.MCMSProposal
 	switch proposalType {
 	case managed.MCMSOnly:
-		out = managed.MCMSOnlyProposal{}
+		out = &managed.MCMSOnlyProposal{}
 	case managed.MCMSWithTimelock:
-		out = managed.MCMSWithTimelockProposal{}
+		out = &managed.MCMSWithTimelockProposal{}
 	case managed.MCMSWithMultisend:
-		out = managed.MCMSWithMultisendProposal{}
+		out = &managed.MCMSWithMultisendProposal{}
 	default:
 		return nil, &errors.ErrInvalidProposalType{ReceivedProposalType: string(proposalType)}
 	}
 
-	json.Unmarshal([]byte(filePath), &out)
+	json.Unmarshal([]byte(filePath), out)
 	return out, nil
 }
 

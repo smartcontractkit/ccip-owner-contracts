@@ -50,7 +50,10 @@ func signPlainKey(privateKeyHex string) {
 
 	// Sign the payload
 	unmarshalledSig := executable.Signature{}
-	json.Unmarshal(sig, &unmarshalledSig)
+	err = json.Unmarshal(sig, &unmarshalledSig)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Add signature to proposal
 	proposal.AddSignature(unmarshalledSig)

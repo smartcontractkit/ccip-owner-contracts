@@ -10,7 +10,7 @@ type MCMSWithMultisendChainMetadata struct {
 }
 
 type MCMSWithMultisendProposal struct {
-	BaseMCMSProposal
+	baseMCMSProposal
 
 	// Map of chain identifier to chain metadata
 	ChainMetadata map[string]MCMSWithMultisendChainMetadata `json:"chainMetadata"`
@@ -19,8 +19,8 @@ type MCMSWithMultisendProposal struct {
 	Transactions []DetailedBatchChainOperation `json:"transactions"`
 }
 
-func (m MCMSWithMultisendProposal) ToExecutableMCMSProposal() (executable.ExecutableMCMSProposal, error) {
-	raw := m.BaseMCMSProposal.ToExecutableMCMSProposal()
+func (m *MCMSWithMultisendProposal) ToExecutableMCMSProposal() (executable.ExecutableMCMSProposal, error) {
+	raw := m.baseMCMSProposal.ToExecutableMCMSProposal()
 
 	for _, t := range m.Transactions {
 		raw.Transactions = append(raw.Transactions, executable.ChainOperation{

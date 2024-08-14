@@ -13,11 +13,27 @@ var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA = crypto.Keccak256([]byte("MA
 type Signature struct {
 	R string
 	S string
-	V string
+	V uint8
+}
+
+func NewSignatureFromBytes(sig []byte) Signature {
+	return Signature{
+		R: common.Bytes2Hex(sig[:32]),
+		S: common.Bytes2Hex(sig[32:64]),
+		V: uint8(sig[64]),
+	}
+}
+
+func (s Signature) ToBytes() []byte {
+	return append(common.FromHex(s.R), append(common.FromHex(s.S), []byte{byte(s.V)}...)...)
+}
+
+func (s Signature) Recover(hash []byte) (common.Address, error) {
+	return recoverAddressFromSignature(hash, s.ToBytes())
 }
 
 type Operation struct {
-	To    string
+	To    common.Address
 	Data  string
 	Value uint64
 }

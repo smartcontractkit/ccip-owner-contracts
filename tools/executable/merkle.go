@@ -33,7 +33,7 @@ func buildRootMetadatas(chainMetadata map[string]ExecutableMCMSChainMetadata, tx
 
 		rootMetadatas[chainID] = gethwrappers.ManyChainMultiSigRootMetadata{
 			ChainId:              stringChainId,
-			MultiSig:             common.HexToAddress(metadata.MCMAddress),
+			MultiSig:             metadata.MCMAddress,
 			PreOpCount:           big.NewInt(currentNonce + int64(metadata.NonceOffset)),
 			PostOpCount:          big.NewInt(currentNonce + int64(metadata.NonceOffset) + int64(txCounts[chainID])),
 			OverridePreviousRoot: overridePreviousRoot,
@@ -57,7 +57,7 @@ func buildOperations(transactions []ChainOperation, rootMetadatas map[string]get
 			ChainId:  rootMetadata.ChainId,
 			MultiSig: rootMetadata.MultiSig,
 			Nonce:    big.NewInt(rootMetadata.PreOpCount.Int64() + int64(chainIdx[tx.ChainIdentifier])),
-			To:       common.HexToAddress(tx.To),
+			To:       tx.To,
 			Data:     common.FromHex(tx.Data),
 			Value:    big.NewInt(int64(tx.Value)),
 		}

@@ -16,21 +16,62 @@ type ExecutableMCMSProposalBase struct {
 	ValidUntil           string      `json:"validUntil"`
 	Signatures           []Signature `json:"signatures"`
 	OverridePreviousRoot bool        `json:"overridePreviousRoot"`
+
+	// Map of chain identifier to chain metadata
+	ChainMetadata map[string]ExecutableMCMSChainMetadata `json:"chainMetadata"`
 }
 
 type ExecutableMCMSChainMetadata struct {
-	NonceOffset uint64 `json:"nonceOffset"`
-	MCMAddress  string `json:"mcmAddress"`
+	NonceOffset uint64         `json:"nonceOffset"`
+	MCMAddress  common.Address `json:"mcmAddress"`
+}
+
+func (m ExecutableMCMSProposalBase) Validate() error {
+	if m.Version == "" {
+		return &errors.ErrInvalidVersion{
+			ReceivedVersion: m.Version,
+		}
+	}
+
+	if m.ValidUntil == "" {
+		return &errors.ErrInvalidValidUntil{
+			ReceivedValidUntil: m.ValidUntil,
+		}
+	}
+
+	if len(m.ChainMetadata) == 0 {
+		return &errors.ErrNoChainMetadata{}
+	}
+
+	return nil
 }
 
 type ExecutableMCMSProposal struct {
 	ExecutableMCMSProposalBase
 
-	// Map of chain identifier to chain metadata
-	ChainMetadata map[string]ExecutableMCMSChainMetadata `json:"chainMetadata"`
-
 	// Operations to be executed
 	Transactions []ChainOperation `json:"transactions"`
+}
+
+func (m *ExecutableMCMSProposal) Validate() error {
+	if err := m.ExecutableMCMSProposalBase.Validate(); err != nil {
+		return err
+	}
+
+	if len(m.Transactions) == 0 {
+		return &errors.ErrNoTransactions{}
+	}
+
+	// Validate all chains in transactions have an entry in chain metadata
+	for _, t := range m.Transactions {
+		if _, ok := m.ChainMetadata[t.ChainIdentifier]; !ok {
+			return &errors.ErrMissingChainMetadata{
+				ChainIdentifier: t.ChainIdentifier,
+			}
+		}
+	}
+
+	return nil
 }
 
 func (m *ExecutableMCMSProposal) SigningHash() ([]byte, error) {
@@ -81,7 +122,7 @@ func (m *ExecutableMCMSProposal) ValidateSignatures(clients map[string]ethclient
 
 	recoveredSigners := make([]common.Address, len(m.Signatures))
 	for _, sig := range m.Signatures {
-		recoveredAddr, err := recoverAddressFromSignature(hash, []byte(sig.R+sig.S+sig.V))
+		recoveredAddr, err := recoverAddressFromSignature(hash, sig.ToBytes())
 		if err != nil {
 			return err
 		}
@@ -151,7 +192,7 @@ func (m *ExecutableMCMSProposal) getAllMCMSWrappers(clients map[string]ethclient
 			}
 		}
 
-		mcms, err := gethwrappers.NewManyChainMultiSig(common.HexToAddress(chainMetadata.MCMAddress), &client)
+		mcms, err := gethwrappers.NewManyChainMultiSig(chainMetadata.MCMAddress, &client)
 		if err != nil {
 			return nil, err
 		}
