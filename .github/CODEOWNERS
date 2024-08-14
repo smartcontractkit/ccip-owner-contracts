@@ -7,4 +7,6 @@
 
 # Tooling
 /tools @smartcontractkit/ccip @smartcontractkit/research @carte7000 @0xAustinWang @akhilchainani @cmalec
-/gethwrappers @smartcontractkit/ccip @smartcontractkit/research
+
+go.mod @smartcontractkit/ccip @smartcontractkit/research @carte7000 @0xAustinWang @akhilchainani @cmalec
+go.sum @smartcontractkit/ccip @smartcontractkit/research @carte7000 @0xAustinWang @akhilchainani @cmalec
