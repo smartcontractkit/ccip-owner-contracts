@@ -15,8 +15,6 @@ func ProposalFromFile(proposalType managed.MCMSProposalType, filePath string) (m
 		out = &managed.MCMSOnlyProposal{}
 	case managed.MCMSWithTimelock:
 		out = &managed.MCMSWithTimelockProposal{}
-	case managed.MCMSWithMultisend:
-		out = &managed.MCMSWithMultisendProposal{}
 	default:
 		return nil, &errors.ErrInvalidProposalType{ReceivedProposalType: string(proposalType)}
 	}

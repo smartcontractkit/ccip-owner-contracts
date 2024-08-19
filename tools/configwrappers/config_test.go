@@ -94,6 +94,21 @@ func TestToRawConfig(t *testing.T) {
 	assert.Equal(t, common.HexToAddress("0x3"), rawConfig.Signers[2].Addr)
 }
 
+// Test case 0: Valid configuration with no signers or groups
+// Configuration:
+// Quorum: 0
+// Signers: []
+// Group signers: []
+func TestExtractSetConfigInputs_EmptyConfig(t *testing.T) {
+	config := NewConfig(0, []common.Address{}, []Config{})
+	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
+
+	assert.Equal(t, [32]uint8{}, groupQuorums)
+	assert.Equal(t, [32]uint8{}, groupParents)
+	assert.Equal(t, []common.Address{}, signerAddresses)
+	assert.Equal(t, []uint8{}, signerGroups)
+}
+
 // Test case 1: Valid configuration with some root signers and some groups
 // Configuration:
 // Quorum: 2

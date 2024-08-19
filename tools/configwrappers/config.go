@@ -31,8 +31,13 @@ func NewConfigFromRaw(rawConfig gethwrappers.ManyChainMultiSigConfig) *Config {
 
 	groups := make([]Config, len(rawConfig.GroupQuorums))
 	for i, quorum := range rawConfig.GroupQuorums {
+		signers := groupToSigners[i]
+		if signers == nil {
+			signers = []common.Address{}
+		}
+
 		groups[i] = Config{
-			Signers:      groupToSigners[i],
+			Signers:      signers,
 			GroupSigners: []Config{},
 			Quorum:       quorum,
 		}
@@ -96,8 +101,8 @@ func (c *Config) ToRawConfig() (gethwrappers.ManyChainMultiSigConfig, error) {
 }
 
 func (c *Config) ExtractSetConfigInputs() ([32]uint8, [32]uint8, []common.Address, []uint8) {
-	var groupQuorums, groupParents, signerGroups []uint8
-	var signers []common.Address
+	var groupQuorums, groupParents, signerGroups []uint8 = []uint8{}, []uint8{}, []uint8{}
+	var signers []common.Address = []common.Address{}
 
 	extractGroupsAndSigners(c, 0, &groupQuorums, &groupParents, &signers, &signerGroups)
 

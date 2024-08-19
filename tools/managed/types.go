@@ -21,13 +21,11 @@ type MCMSProposal interface {
 type MCMSProposalType string
 
 const (
-	MCMSOnly          MCMSProposalType = "mcms-only"
-	MCMSWithTimelock  MCMSProposalType = "mcms-with-timelock"
-	MCMSWithMultisend MCMSProposalType = "mcms-with-multisend"
+	MCMSOnly         MCMSProposalType = "mcms-only"
+	MCMSWithTimelock MCMSProposalType = "mcms-with-timelock"
 )
 
 var MCMSProposalTypeMap = map[string]MCMSProposalType{
-	"mcms-only":           MCMSOnly,
-	"mcms-with-timelock":  MCMSWithTimelock,
-	"mcms-with-multisend": MCMSWithMultisend,
+	"mcms-only":          MCMSOnly,
+	"mcms-with-timelock": MCMSWithTimelock,
 }
