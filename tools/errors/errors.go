@@ -120,3 +120,11 @@ type ErrInvalidSignature struct {
 func (e *ErrInvalidSignature) Error() string {
 	return fmt.Sprintf("invalid signature: received signature for address %s is not a signer on MCMS %s on chain %s", e.RecoveredAddress, e.MCMSAddress, e.ChainIdentifier)
 }
+
+type ErrInvalidMCMSConfig struct {
+	Reason string
+}
+
+func (e *ErrInvalidMCMSConfig) Error() string {
+	return fmt.Sprintf("invalid MCMS config: %s", e.Reason)
+}
