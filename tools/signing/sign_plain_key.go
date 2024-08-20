@@ -9,6 +9,7 @@ import (
 	// NOTE MUST BE > 1.14 for this fix
 	// https://github.com/ethereum/go-ethereum/pull/28945
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/executable"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/managed"
@@ -31,7 +32,7 @@ func signPlainKey(privateKeyHex string) {
 	}
 
 	// Get the signing hash
-	payload, err := executableProposal.SigningHash()
+	payload, err := executableProposal.SigningHash(make(map[string]bind.ContractBackend)) // TODO: pass in a real backend
 	if err != nil {
 		log.Fatal(err)
 	}

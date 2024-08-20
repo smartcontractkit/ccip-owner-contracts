@@ -77,14 +77,15 @@ func (e *ErrInvalidVersion) Error() string {
 	return fmt.Sprintf("invalid version: %s", e.ReceivedVersion)
 }
 
-// ErrMissingChainMetadata is the error for missing chain metadata.
-type ErrMissingChainMetadata struct {
+// ErrMissingChainDetails is the error for missing chain metadata.
+type ErrMissingChainDetails struct {
+	Parameter       string
 	ChainIdentifier string
 }
 
 // Error returns the error message.
-func (e *ErrMissingChainMetadata) Error() string {
-	return fmt.Sprintf("missing chain metadata for chain %s", e.ChainIdentifier)
+func (e *ErrMissingChainDetails) Error() string {
+	return fmt.Sprintf("missing %s for chain %s", e.Parameter, e.ChainIdentifier)
 }
 
 // ErrMissingChainClient is the error for missing chain client.

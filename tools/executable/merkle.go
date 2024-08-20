@@ -3,10 +3,11 @@ package executable
 import (
 	"math/big"
 	"sort"
+	"strings"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 )
@@ -19,9 +20,13 @@ func calculateTransactionCounts(transactions []ChainOperation) map[string]uint64
 	return txCounts
 }
 
-func buildRootMetadatas(chainMetadata map[string]ExecutableMCMSChainMetadata, txCounts map[string]uint64, overridePreviousRoot bool) (map[string]gethwrappers.ManyChainMultiSigRootMetadata, error) {
+func buildRootMetadatas(
+	chainMetadata map[string]ExecutableMCMSChainMetadata,
+	txCounts map[string]uint64,
+	currentOpCounts map[string]big.Int,
+	overridePreviousRoot bool,
+) (map[string]gethwrappers.ManyChainMultiSigRootMetadata, error) {
 	rootMetadatas := make(map[string]gethwrappers.ManyChainMultiSigRootMetadata)
-	currentNonce := int64(0) // TODO: fetch this from the chain
 
 	for chainID, metadata := range chainMetadata {
 		stringChainId, err := big.NewInt(0).SetString(chainID, 10)
@@ -31,18 +36,38 @@ func buildRootMetadatas(chainMetadata map[string]ExecutableMCMSChainMetadata, tx
 			}
 		}
 
+		currentNonce, ok := currentOpCounts[chainID]
+		if !ok {
+			return nil, &errors.ErrMissingChainDetails{
+				ChainIdentifier: chainID,
+				Parameter:       "current op count",
+			}
+		}
+
+		currentTxCount, ok := txCounts[chainID]
+		if !ok {
+			return nil, &errors.ErrMissingChainDetails{
+				ChainIdentifier: chainID,
+				Parameter:       "transaction count",
+			}
+		}
+
 		rootMetadatas[chainID] = gethwrappers.ManyChainMultiSigRootMetadata{
 			ChainId:              stringChainId,
 			MultiSig:             metadata.MCMAddress,
-			PreOpCount:           big.NewInt(currentNonce + int64(metadata.NonceOffset)),
-			PostOpCount:          big.NewInt(currentNonce + int64(metadata.NonceOffset) + int64(txCounts[chainID])),
+			PreOpCount:           big.NewInt(currentNonce.Int64() + int64(metadata.NonceOffset)),                         // TODO: handle overflow
+			PostOpCount:          big.NewInt(currentNonce.Int64() + int64(metadata.NonceOffset) + int64(currentTxCount)), // TODO: handle overflow
 			OverridePreviousRoot: overridePreviousRoot,
 		}
 	}
 	return rootMetadatas, nil
 }
 
-func buildOperations(transactions []ChainOperation, rootMetadatas map[string]gethwrappers.ManyChainMultiSigRootMetadata, txCounts map[string]uint64) (map[string][]gethwrappers.ManyChainMultiSigOp, error) {
+func buildOperations(
+	transactions []ChainOperation,
+	rootMetadatas map[string]gethwrappers.ManyChainMultiSigRootMetadata,
+	txCounts map[string]uint64,
+) (map[string][]gethwrappers.ManyChainMultiSigOp, error) {
 	ops := make(map[string][]gethwrappers.ManyChainMultiSigOp)
 	chainIdx := make(map[string]uint32, len(rootMetadatas))
 
@@ -78,39 +103,89 @@ func sortedChainIdentifiers(chainMetadata map[string]ExecutableMCMSChainMetadata
 	return chainIdentifiers
 }
 
-func buildMerkleTree(chainIdentifiers []string, ops map[string][]gethwrappers.ManyChainMultiSigOp) (map[string]string, string, error) {
-	tree := make(map[string]string)
-	currentHashes := make([]string, 0)
+func buildMerkleTree(
+	chainIdentifiers []string,
+	rootMetadatas map[string]gethwrappers.ManyChainMultiSigRootMetadata,
+	ops map[string][]gethwrappers.ManyChainMultiSigOp,
+) (*MerkleTree, error) {
+	hashLeaves := make([]common.Hash, 0)
 
 	for _, chainID := range chainIdentifiers {
+		encodedRootMetadata, err := metadataEncoder(rootMetadatas[chainID])
+		if err != nil {
+			return nil, err
+		}
+		hashLeaves = append(hashLeaves, encodedRootMetadata)
+
 		for _, op := range ops[chainID] {
-			encoded, err := rlp.EncodeToBytes(op)
+			encodedOp, err := txEncoder(op)
 			if err != nil {
-				return nil, "", err
+				return nil, err
 			}
-
-			hash := common.Bytes2Hex(crypto.Keccak256(MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP, encoded))
-			currentHashes = append(currentHashes, hash)
+			hashLeaves = append(hashLeaves, encodedOp)
 		}
 	}
 
-	if len(currentHashes)%2 != 0 {
-		currentHashes = append(currentHashes, currentHashes[len(currentHashes)-1])
+	// sort the hashes and sort the pairs
+	sort.Slice(hashLeaves, func(i, j int) bool {
+		return hashLeaves[i].String() < hashLeaves[j].String()
+	})
+
+	return NewMerkleTree(hashLeaves), nil
+}
+
+func metadataEncoder(rootMetadata gethwrappers.ManyChainMultiSigRootMetadata) (common.Hash, error) {
+	// ABI definition for the metadata tuple
+	abiJSON := `[{
+		"name": "metadata",
+		"type": "function",
+		"inputs": [
+			{"name": "domainSeparator", "type": "bytes32"},
+			{"name": "metadata", "type": "tuple(uint256 chainId, address multisig, uint48 preOpCount, uint48 postOpCount, bool overridePreviousRoot)"}
+		]
+	}]`
+
+	parsedABI, err := abi.JSON(strings.NewReader(abiJSON))
+	if err != nil {
+		return common.Hash{}, err
 	}
 
-	for len(currentHashes) > 1 {
-		tempCurrentHashes := make([]string, 0)
-
-		for i := 0; i < len(currentHashes); i += 2 {
-			parentHash := common.Bytes2Hex(crypto.Keccak256(common.FromHex(currentHashes[i]), common.FromHex(currentHashes[i+1])))
-			tree[currentHashes[i]] = parentHash
-			tree[currentHashes[i+1]] = parentHash
-			tempCurrentHashes = append(tempCurrentHashes, parentHash)
-		}
-
-		currentHashes = tempCurrentHashes
+	// Pack the data using abi.Pack
+	packed, err := parsedABI.Pack("metadata",
+		MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA,
+		rootMetadata,
+	)
+	if err != nil {
+		return common.Hash{}, err
 	}
 
-	root := currentHashes[0]
-	return tree, root, nil
+	return crypto.Keccak256Hash(packed), nil
+}
+
+func txEncoder(op gethwrappers.ManyChainMultiSigOp) (common.Hash, error) {
+	// ABI definition for the transaction tuple
+	abiJSON := `[{
+		"name": "tx",
+		"type": "function",
+		"inputs": [
+			{"name": "domainSeparator", "type": "bytes32"},
+			{"name": "tx", "type": "tuple(uint256 chainId, address multisig, uint64 nonce, address to, uint256 value, bytes data)"}
+		]
+	}]`
+
+	parsedABI, err := abi.JSON(strings.NewReader(abiJSON))
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	// Pack the data using abi.Pack
+	packed, err := parsedABI.Pack("tx",
+		MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP,
+		op,
+	)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	return crypto.Keccak256Hash(packed), nil
 }

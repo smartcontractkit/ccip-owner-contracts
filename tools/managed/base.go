@@ -33,8 +33,9 @@ func (m *baseMCMSProposal) Validate() error {
 	// Validate all chains in transactions have an entry in chain metadata
 	for _, t := range m.Transactions {
 		if _, ok := m.ChainMetadata[t.GetChainIdentifier()]; !ok {
-			return &errors.ErrMissingChainMetadata{
+			return &errors.ErrMissingChainDetails{
 				ChainIdentifier: t.GetChainIdentifier(),
+				Parameter:       "chain metadata",
 			}
 		}
 	}

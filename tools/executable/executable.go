@@ -6,7 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 )
@@ -65,8 +64,9 @@ func (m *ExecutableMCMSProposal) Validate() error {
 	// Validate all chains in transactions have an entry in chain metadata
 	for _, t := range m.Transactions {
 		if _, ok := m.ChainMetadata[t.ChainIdentifier]; !ok {
-			return &errors.ErrMissingChainMetadata{
+			return &errors.ErrMissingChainDetails{
 				ChainIdentifier: t.ChainIdentifier,
+				Parameter:       "chain metadata",
 			}
 		}
 	}
@@ -74,8 +74,8 @@ func (m *ExecutableMCMSProposal) Validate() error {
 	return nil
 }
 
-func (m *ExecutableMCMSProposal) SigningHash() ([]byte, error) {
-	_, root, err := m.ConstructMerkleTree()
+func (m *ExecutableMCMSProposal) SigningHash(clients map[string]bind.ContractBackend) ([]byte, error) {
+	tree, err := m.ConstructMerkleTree(clients)
 	if err != nil {
 		return nil, err
 	}
@@ -88,34 +88,35 @@ func (m *ExecutableMCMSProposal) SigningHash() ([]byte, error) {
 		}
 	}
 
-	return append([]byte("\x19Ethereum Signed Message:\n"), crypto.Keccak256(common.FromHex(root), validUntil.Bytes())...), nil
+	return append([]byte("\x19Ethereum Signed Message:\n"), crypto.Keccak256(tree.Root.Bytes(), validUntil.Bytes())...), nil
 }
 
-func (m *ExecutableMCMSProposal) ConstructMerkleTree() (map[string]string, string, error) {
+func (m *ExecutableMCMSProposal) ConstructMerkleTree(clients map[string]bind.ContractBackend) (*MerkleTree, error) {
 	txCounts := calculateTransactionCounts(m.Transactions)
+	currentOpCounts := m.GetCurrentOpCounts(clients)
 
-	rootMetadatas, err := buildRootMetadatas(m.ChainMetadata, txCounts, m.OverridePreviousRoot)
+	rootMetadatas, err := buildRootMetadatas(m.ChainMetadata, txCounts, currentOpCounts, m.OverridePreviousRoot)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	ops, err := buildOperations(m.Transactions, rootMetadatas, txCounts)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	chainIdentifiers := sortedChainIdentifiers(m.ChainMetadata)
 
-	tree, root, err := buildMerkleTree(chainIdentifiers, ops)
+	tree, err := buildMerkleTree(chainIdentifiers, rootMetadatas, ops)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
-	return tree, root, nil
+	return tree, nil
 }
 
-func (m *ExecutableMCMSProposal) ValidateSignatures(clients map[string]ethclient.Client) error {
-	hash, err := m.SigningHash()
+func (m *ExecutableMCMSProposal) ValidateSignatures(clients map[string]bind.ContractBackend) error {
+	hash, err := m.SigningHash(clients)
 	if err != nil {
 		return err
 	}
@@ -162,7 +163,7 @@ func (m *ExecutableMCMSProposal) ValidateSignatures(clients map[string]ethclient
 	return nil
 }
 
-func (m *ExecutableMCMSProposal) GetCurrentOpCounts(clients map[string]ethclient.Client) map[string]big.Int {
+func (m *ExecutableMCMSProposal) GetCurrentOpCounts(clients map[string]bind.ContractBackend) map[string]big.Int {
 	opCounts := make(map[string]big.Int)
 	wrappers, err := m.getAllMCMSWrappers(clients)
 	if err != nil {
@@ -181,7 +182,7 @@ func (m *ExecutableMCMSProposal) GetCurrentOpCounts(clients map[string]ethclient
 	return opCounts
 }
 
-func (m *ExecutableMCMSProposal) getAllMCMSWrappers(clients map[string]ethclient.Client) (map[string]*gethwrappers.ManyChainMultiSig, error) {
+func (m *ExecutableMCMSProposal) getAllMCMSWrappers(clients map[string]bind.ContractBackend) (map[string]*gethwrappers.ManyChainMultiSig, error) {
 	mcmsWrappers := make(map[string]*gethwrappers.ManyChainMultiSig)
 
 	for chain, chainMetadata := range m.ChainMetadata {
@@ -192,7 +193,7 @@ func (m *ExecutableMCMSProposal) getAllMCMSWrappers(clients map[string]ethclient
 			}
 		}
 
-		mcms, err := gethwrappers.NewManyChainMultiSig(chainMetadata.MCMAddress, &client)
+		mcms, err := gethwrappers.NewManyChainMultiSig(chainMetadata.MCMAddress, client)
 		if err != nil {
 			return nil, err
 		}
