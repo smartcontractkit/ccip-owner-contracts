@@ -16,7 +16,7 @@ func TestBaseMCMSProposal_Validate(t *testing.T) {
 		ExecutableMCMSProposal: executable.ExecutableMCMSProposal{
 			ExecutableMCMSProposalBase: executable.ExecutableMCMSProposalBase{
 				Version:    "1.0.0",
-				ValidUntil: "2022-12-31",
+				ValidUntil: 2004259681,
 				Signatures: []executable.Signature{},
 				ChainMetadata: map[string]executable.ExecutableMCMSChainMetadata{
 					TestChain: {
@@ -55,7 +55,7 @@ func TestBaseMCMSProposal_Validate_InvalidBase(t *testing.T) {
 		ExecutableMCMSProposal: executable.ExecutableMCMSProposal{
 			ExecutableMCMSProposalBase: executable.ExecutableMCMSProposalBase{
 				Version:    "",
-				ValidUntil: "2022-12-31",
+				ValidUntil: 2004259681,
 				Signatures: []executable.Signature{},
 				ChainMetadata: map[string]executable.ExecutableMCMSChainMetadata{
 					TestChain: {
@@ -95,7 +95,7 @@ func TestBaseMCMSProposal_Validate_InvalidDescription(t *testing.T) {
 		ExecutableMCMSProposal: executable.ExecutableMCMSProposal{
 			ExecutableMCMSProposalBase: executable.ExecutableMCMSProposalBase{
 				Version:    "1.0.0",
-				ValidUntil: "2022-12-31",
+				ValidUntil: 2004259681,
 				Signatures: []executable.Signature{},
 				ChainMetadata: map[string]executable.ExecutableMCMSChainMetadata{
 					TestChain: {
@@ -135,7 +135,7 @@ func TestBaseMCMSProposal_Validate_MissingChainMetadataForTransaction(t *testing
 		ExecutableMCMSProposal: executable.ExecutableMCMSProposal{
 			ExecutableMCMSProposalBase: executable.ExecutableMCMSProposalBase{
 				Version:    "1.0.0",
-				ValidUntil: "2022-12-31",
+				ValidUntil: 2004259681,
 				Signatures: []executable.Signature{},
 				ChainMetadata: map[string]executable.ExecutableMCMSChainMetadata{
 					TestChain: {
@@ -175,7 +175,7 @@ func TestBaseMCMSProposal_AddSignature(t *testing.T) {
 		ExecutableMCMSProposal: executable.ExecutableMCMSProposal{
 			ExecutableMCMSProposalBase: executable.ExecutableMCMSProposalBase{
 				Version:    "1.0.0",
-				ValidUntil: "2022-12-31",
+				ValidUntil: 2004259681,
 				Signatures: []executable.Signature{},
 				ChainMetadata: map[string]executable.ExecutableMCMSChainMetadata{
 					TestChain: {

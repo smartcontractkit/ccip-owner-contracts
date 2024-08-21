@@ -62,11 +62,11 @@ func (e *ErrInvalidTimelockOperation) Error() string {
 }
 
 type ErrInvalidValidUntil struct {
-	ReceivedValidUntil string
+	ReceivedValidUntil uint32
 }
 
 func (e *ErrInvalidValidUntil) Error() string {
-	return fmt.Sprintf("invalid valid until: %s", e.ReceivedValidUntil)
+	return fmt.Sprintf("invalid valid until: %v", e.ReceivedValidUntil)
 }
 
 type ErrInvalidVersion struct {

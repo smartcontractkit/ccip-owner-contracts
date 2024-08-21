@@ -6,7 +6,10 @@ import (
 )
 
 type MerkleTree struct {
-	Root   common.Hash
+	// Root hash of the merkle tree
+	Root common.Hash
+
+	// Layers of the merkle tree, starting from the leaves
 	Layers [][]common.Hash
 }
 
@@ -83,6 +86,22 @@ func (t *MerkleTree) GetProof(hash common.Hash) ([]common.Hash, error) {
 	}
 
 	return proof, nil
+}
+
+func (t *MerkleTree) GetProofs() (map[common.Hash][]common.Hash, error) {
+	proofs := make(map[common.Hash][]common.Hash)
+
+	for _, leaf := range t.Layers[0] {
+		proof, err := t.GetProof(leaf)
+		if err != nil {
+			// THIS SHOULD NEVER HAPPEN
+			return nil, err
+		}
+
+		proofs[leaf] = proof
+	}
+
+	return proofs, nil
 }
 
 type ErrMerkleTreeNodeNotFound struct {

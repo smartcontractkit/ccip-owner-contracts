@@ -13,7 +13,7 @@ func TestExecutableMCMSProposal_Validate_Success(t *testing.T) {
 	proposal := &ExecutableMCMSProposal{
 		ExecutableMCMSProposalBase: ExecutableMCMSProposalBase{
 			Version:              "1.0",
-			ValidUntil:           "1635724800",
+			ValidUntil:           2004259681,
 			Signatures:           []Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[string]ExecutableMCMSChainMetadata{
@@ -44,7 +44,7 @@ func TestExecutableMCMSProposal_Validate_InvalidVersion(t *testing.T) {
 	proposal := &ExecutableMCMSProposal{
 		ExecutableMCMSProposalBase: ExecutableMCMSProposalBase{
 			Version:              "",
-			ValidUntil:           "1635724800",
+			ValidUntil:           2004259681,
 			Signatures:           []Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[string]ExecutableMCMSChainMetadata{
@@ -76,7 +76,7 @@ func TestExecutableMCMSProposal_Validate_InvalidValidUntil(t *testing.T) {
 	proposal := &ExecutableMCMSProposal{
 		ExecutableMCMSProposalBase: ExecutableMCMSProposalBase{
 			Version:              "1.0",
-			ValidUntil:           "",
+			ValidUntil:           0,
 			Signatures:           []Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[string]ExecutableMCMSChainMetadata{
@@ -101,14 +101,14 @@ func TestExecutableMCMSProposal_Validate_InvalidValidUntil(t *testing.T) {
 	err := proposal.Validate()
 
 	assert.Error(t, err)
-	assert.Equal(t, err.Error(), "invalid valid until: ")
+	assert.Equal(t, err.Error(), "invalid valid until: 0")
 }
 
 func TestExecutableMCMSProposal_Validate_InvalidChainMetadata(t *testing.T) {
 	proposal := &ExecutableMCMSProposal{
 		ExecutableMCMSProposalBase: ExecutableMCMSProposalBase{
 			Version:              "1.0",
-			ValidUntil:           "1635724800",
+			ValidUntil:           2004259681,
 			Signatures:           []Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata:        map[string]ExecutableMCMSChainMetadata{},
@@ -135,7 +135,7 @@ func TestExecutableMCMSProposal_Validate_NoTransactions(t *testing.T) {
 	proposal := &ExecutableMCMSProposal{
 		ExecutableMCMSProposalBase: ExecutableMCMSProposalBase{
 			Version:              "1.0",
-			ValidUntil:           "1635724800",
+			ValidUntil:           2004259681,
 			Signatures:           []Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[string]ExecutableMCMSChainMetadata{
@@ -158,7 +158,7 @@ func TestExecutableMCMSProposal_Validate_MissingChainMetadataForTransaction(t *t
 	proposal := &ExecutableMCMSProposal{
 		ExecutableMCMSProposalBase: ExecutableMCMSProposalBase{
 			Version:              "1.0",
-			ValidUntil:           "1635724800",
+			ValidUntil:           2004259681,
 			Signatures:           []Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[string]ExecutableMCMSChainMetadata{

@@ -8,7 +8,7 @@ import (
 
 	// NOTE MUST BE > 1.14 for this fix
 	// https://github.com/ethereum/go-ethereum/pull/28945
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+
 	"github.com/ethereum/go-ethereum/accounts/usbwallet"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/executable"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/managed"
@@ -50,14 +50,19 @@ func signLedger() {
 	}
 	account, _ := wallet.Derive(derivationPath, true)
 
+	executor, err := executableProposal.ToExecutor(make(map[string]executable.ContractDeployBackend)) // TODO: pass in a real backend
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Get the signing hash
-	payload, err := executableProposal.SigningHash(make(map[string]bind.ContractBackend)) // TODO: pass in a real backend
+	payload, err := executor.SigningHash()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Sign the payload
-	sig, _ := wallet.SignData(account, "", payload)
+	sig, _ := wallet.SignData(account, "", payload.Bytes())
 	unmarshalledSig := executable.Signature{}
 	err = json.Unmarshal(sig, &unmarshalledSig)
 	if err != nil {
