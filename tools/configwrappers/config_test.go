@@ -84,9 +84,8 @@ func TestToRawConfig(t *testing.T) {
 		{Quorum: 2, Signers: []common.Address{common.HexToAddress("0x3")}},
 	}
 	config := NewConfig(1, signers, groupSigners)
-	rawConfig, err := config.ToRawConfig()
+	rawConfig := config.ToRawConfig()
 
-	assert.NoError(t, err)
 	assert.Equal(t, [32]uint8{1, 2}, rawConfig.GroupQuorums)
 	assert.Equal(t, [32]uint8{0, 0}, rawConfig.GroupParents)
 	assert.Equal(t, common.HexToAddress("0x1"), rawConfig.Signers[0].Addr)

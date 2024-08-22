@@ -80,7 +80,7 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (c *Config) ToRawConfig() (gethwrappers.ManyChainMultiSigConfig, error) {
+func (c *Config) ToRawConfig() gethwrappers.ManyChainMultiSigConfig {
 	groupQuorums, groupParents, signerAddresses, signerGroups := c.ExtractSetConfigInputs()
 
 	// convert to gethwrappers types
@@ -97,7 +97,7 @@ func (c *Config) ToRawConfig() (gethwrappers.ManyChainMultiSigConfig, error) {
 		GroupQuorums: groupQuorums,
 		GroupParents: groupParents,
 		Signers:      signers,
-	}, nil
+	}
 }
 
 func (c *Config) ExtractSetConfigInputs() ([32]uint8, [32]uint8, []common.Address, []uint8) {

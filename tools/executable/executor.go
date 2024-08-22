@@ -82,7 +82,7 @@ func (e *Executor) ValidateSignatures() error {
 
 	recoveredSigners := make([]common.Address, len(e.Proposal.Signatures))
 	for _, sig := range e.Proposal.Signatures {
-		recoveredAddr, err := recoverAddressFromSignature(hash, sig.ToBytes())
+		recoveredAddr, err := sig.Recover(hash)
 		if err != nil {
 			return err
 		}
