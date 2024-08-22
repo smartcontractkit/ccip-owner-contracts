@@ -206,8 +206,8 @@ func TestBaseMCMSProposal_AddSignature(t *testing.T) {
 	}
 
 	sig := executable.Signature{
-		R: "0x1234567890abcdef",
-		S: "0x1234567890abcdef",
+		R: common.HexToHash("0x1234567890abcdef"),
+		S: common.HexToHash("0x1234567890abcdef"),
 		V: 27,
 	}
 
