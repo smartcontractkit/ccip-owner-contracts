@@ -67,8 +67,9 @@ func buildOperations(
 	transactions []ChainOperation,
 	rootMetadatas map[string]gethwrappers.ManyChainMultiSigRootMetadata,
 	txCounts map[string]uint64,
-) (map[string][]gethwrappers.ManyChainMultiSigOp, error) {
+) (map[string][]gethwrappers.ManyChainMultiSigOp, []gethwrappers.ManyChainMultiSigOp) {
 	ops := make(map[string][]gethwrappers.ManyChainMultiSigOp)
+	chainAgnosticOps := make([]gethwrappers.ManyChainMultiSigOp, 0)
 	chainIdx := make(map[string]uint32, len(rootMetadatas))
 
 	for _, tx := range transactions {
@@ -87,11 +88,12 @@ func buildOperations(
 			Value:    big.NewInt(int64(tx.Value)),
 		}
 
+		chainAgnosticOps = append(chainAgnosticOps, op)
 		ops[tx.ChainIdentifier][chainIdx[tx.ChainIdentifier]] = op
 		chainIdx[tx.ChainIdentifier]++
 	}
 
-	return ops, nil
+	return ops, chainAgnosticOps
 }
 
 func sortedChainIdentifiers(chainMetadata map[string]ExecutableMCMSChainMetadata) []string {

@@ -13,11 +13,12 @@ import (
 )
 
 type Executor struct {
-	Proposal      *ExecutableMCMSProposal
-	Tree          *MerkleTree
-	RootMetadatas map[string]gethwrappers.ManyChainMultiSigRootMetadata
-	Operations    map[string][]gethwrappers.ManyChainMultiSigOp
-	Caller        *Caller
+	Proposal         *ExecutableMCMSProposal
+	Tree             *MerkleTree
+	RootMetadatas    map[string]gethwrappers.ManyChainMultiSigRootMetadata
+	Operations       map[string][]gethwrappers.ManyChainMultiSigOp
+	ChainAgnosticOps []gethwrappers.ManyChainMultiSigOp
+	Caller           *Caller
 }
 
 func NewProposalExecutor(proposal *ExecutableMCMSProposal, clients map[string]ContractDeployBackend) (*Executor, error) {
@@ -38,21 +39,17 @@ func NewProposalExecutor(proposal *ExecutableMCMSProposal, clients map[string]Co
 		return nil, err
 	}
 
-	ops, err := buildOperations(proposal.Transactions, rootMetadatas, txCounts)
-	if err != nil {
-		return nil, err
-	}
-
+	ops, chainAgnosticOps := buildOperations(proposal.Transactions, rootMetadatas, txCounts)
 	chainIdentifiers := sortedChainIdentifiers(proposal.ChainMetadata)
-
 	tree, err := buildMerkleTree(chainIdentifiers, rootMetadatas, ops)
 
 	return &Executor{
-		Proposal:      proposal,
-		Tree:          tree,
-		RootMetadatas: rootMetadatas,
-		Operations:    ops,
-		Caller:        caller,
+		Proposal:         proposal,
+		Tree:             tree,
+		RootMetadatas:    rootMetadatas,
+		Operations:       ops,
+		ChainAgnosticOps: chainAgnosticOps,
+		Caller:           caller,
 	}, err
 }
 
@@ -115,6 +112,50 @@ func (e *Executor) ValidateSignatures() error {
 	}
 
 	return nil
+}
+
+func (e *Executor) SetRootOnChain(chain string) (*types.Transaction, error) {
+	metadata := e.RootMetadatas[chain]
+
+	encodedMetadata, err := metadataEncoder(metadata)
+	if err != nil {
+		return nil, err
+	}
+
+	proof, err := e.Tree.GetProof(encodedMetadata)
+	if err != nil {
+		return nil, err
+	}
+
+	return e.Caller.Callers[chain].SetRoot(
+		&bind.TransactOpts{},
+		[32]byte(e.Tree.Root.Bytes()),
+		e.Proposal.ValidUntil, metadata,
+		mapHashes(proof),
+		mapSignatures(e.Proposal.Signatures),
+	)
+}
+
+func (e *Executor) ExecuteOnChain(idx int) (*types.Transaction, error) {
+	operation := e.Proposal.Transactions[idx]
+	chain := operation.ChainIdentifier
+
+	mcmOperation := e.ChainAgnosticOps[idx]
+	hash, err := txEncoder(mcmOperation)
+	if err != nil {
+		return nil, err
+	}
+
+	proof, err := e.Tree.GetProof(hash)
+	if err != nil {
+		return nil, err
+	}
+
+	return e.Caller.Callers[chain].Execute(
+		&bind.TransactOpts{},
+		mcmOperation,
+		mapHashes(proof),
+	)
 }
 
 func (e *Executor) Execute() error {
