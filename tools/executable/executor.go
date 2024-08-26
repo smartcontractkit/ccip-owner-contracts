@@ -1,7 +1,6 @@
 package executable
 
 import (
-	"context"
 	"encoding/binary"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -156,44 +155,4 @@ func (e *Executor) ExecuteOnChain(idx int) (*types.Transaction, error) {
 		mcmOperation,
 		mapHashes(proof),
 	)
-}
-
-func (e *Executor) Execute() error {
-	proofs, err := e.Tree.GetProofs()
-	if err != nil {
-		return err
-	}
-
-	setRootTxs := make(map[string]*types.Transaction, 0)
-	for chain, metadata := range e.RootMetadatas {
-		encodedMetadata, err := metadataEncoder(metadata)
-		if err != nil {
-			return err
-		}
-
-		tx, err := e.Caller.Callers[chain].SetRoot(
-			&bind.TransactOpts{},
-			[32]byte(e.Tree.Root.Bytes()),
-			e.Proposal.ValidUntil,
-			metadata,
-			mapHashes(proofs[encodedMetadata]),
-			mapSignatures(e.Proposal.Signatures),
-		)
-		setRootTxs[chain] = tx
-
-		if err != nil {
-			return err
-		}
-	}
-
-	// Wait for all SetRoot transactions to be mined
-	for chain, tx := range setRootTxs {
-		_, err := bind.WaitMined(context.TODO(), e.Caller.Clients[chain], tx)
-		if err != nil {
-			return err
-		}
-	}
-
-	// TODO: Implement execute as well
-	return nil
 }
