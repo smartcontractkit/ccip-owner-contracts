@@ -59,6 +59,8 @@ func (s *Scheduler) Run(ctx context.Context) (bool, error) {
 		}
 
 		// Step 4
+		// we don't use a channel here, because we could eventually just trigger lambda
+		// should we use a channel?
 		if allDepsSuccess {
 			go w.SendTxn(ctx, operation, s.OpStore)
 		}
