@@ -104,6 +104,7 @@ func (e *Executor) ValidateSignatures() error {
 
 			if !found {
 				return &errors.ErrInvalidSignature{
+					MCMSAddress:      e.RootMetadatas[chain].MultiSig,
 					ChainIdentifier:  chain,
 					RecoveredAddress: signer,
 				}

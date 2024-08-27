@@ -12,13 +12,13 @@ type ContractDeployBackend interface {
 }
 
 type Operation struct {
-	To    common.Address
-	Data  string
-	Value uint64
+	To    common.Address `json:"to"`
+	Data  string         `json:"data"`
+	Value uint64         `json:"value"`
 }
 
 type ChainOperation struct {
-	ChainIdentifier string
+	ChainIdentifier string `json:"chainSelector"`
 	Operation
 }
 
