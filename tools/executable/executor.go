@@ -77,12 +77,12 @@ func (e *Executor) ValidateSignatures() error {
 	}
 
 	recoveredSigners := make([]common.Address, len(e.Proposal.Signatures))
-	for _, sig := range e.Proposal.Signatures {
+	for i, sig := range e.Proposal.Signatures {
 		recoveredAddr, err := sig.Recover(hash)
 		if err != nil {
 			return err
 		}
-		recoveredSigners = append(recoveredSigners, recoveredAddr)
+		recoveredSigners[i] = recoveredAddr
 	}
 
 	configs, err := e.Caller.GetConfigs()
@@ -113,7 +113,7 @@ func (e *Executor) ValidateSignatures() error {
 	return nil
 }
 
-func (e *Executor) SetRootOnChain(chain string) (*types.Transaction, error) {
+func (e *Executor) SetRootOnChain(auth *bind.TransactOpts, chain string) (*types.Transaction, error) {
 	metadata := e.RootMetadatas[chain]
 
 	encodedMetadata, err := metadataEncoder(metadata)
@@ -127,7 +127,7 @@ func (e *Executor) SetRootOnChain(chain string) (*types.Transaction, error) {
 	}
 
 	return e.Caller.Callers[chain].SetRoot(
-		&bind.TransactOpts{},
+		auth,
 		[32]byte(e.Tree.Root.Bytes()),
 		e.Proposal.ValidUntil, metadata,
 		mapHashes(proof),
@@ -135,7 +135,7 @@ func (e *Executor) SetRootOnChain(chain string) (*types.Transaction, error) {
 	)
 }
 
-func (e *Executor) ExecuteOnChain(idx int) (*types.Transaction, error) {
+func (e *Executor) ExecuteOnChain(auth *bind.TransactOpts, idx int) (*types.Transaction, error) {
 	operation := e.Proposal.Transactions[idx]
 	chain := operation.ChainIdentifier
 
@@ -151,7 +151,7 @@ func (e *Executor) ExecuteOnChain(idx int) (*types.Transaction, error) {
 	}
 
 	return e.Caller.Callers[chain].Execute(
-		&bind.TransactOpts{},
+		auth,
 		mcmOperation,
 		mapHashes(proof),
 	)

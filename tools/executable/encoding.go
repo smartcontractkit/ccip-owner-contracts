@@ -3,7 +3,6 @@ package executable
 import (
 	"math/big"
 	"sort"
-	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -11,6 +10,9 @@ import (
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 )
+
+var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP"))
+var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA"))
 
 func calculateTransactionCounts(transactions []ChainOperation) map[string]uint64 {
 	txCounts := make(map[string]uint64)
@@ -137,23 +139,36 @@ func buildMerkleTree(
 }
 
 func metadataEncoder(rootMetadata gethwrappers.ManyChainMultiSigRootMetadata) (common.Hash, error) {
-	// ABI definition for the metadata tuple
-	abiJSON := `[{
-		"name": "metadata",
-		"type": "function",
-		"inputs": [
-			{"name": "domainSeparator", "type": "bytes32"},
-			{"name": "metadata", "type": "tuple(uint256 chainId, address multisig, uint48 preOpCount, uint48 postOpCount, bool overridePreviousRoot)"}
-		]
-	}]`
-
-	parsedABI, err := abi.JSON(strings.NewReader(abiJSON))
+	// Define the tuple type using abi.NewType
+	bytes32Type, err := abi.NewType("bytes32", "", nil)
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	// Pack the data using abi.Pack
-	packed, err := parsedABI.Pack("metadata",
+	// Define the tuple type
+	tupleType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+		{Name: "chainId", Type: "uint256"},
+		{Name: "multiSig", Type: "address"},
+		{Name: "preOpCount", Type: "uint40"},
+		{Name: "postOpCount", Type: "uint40"},
+		{Name: "overridePreviousRoot", Type: "bool"},
+	})
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	// Create an Arguments object representing the tuple in the correct order
+	args := abi.Arguments{
+		{
+			Type: bytes32Type,
+		},
+		{
+			Type: tupleType,
+		},
+	}
+
+	// Pack the data
+	packed, err := args.Pack(
 		MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA,
 		rootMetadata,
 	)
@@ -161,27 +176,42 @@ func metadataEncoder(rootMetadata gethwrappers.ManyChainMultiSigRootMetadata) (c
 		return common.Hash{}, err
 	}
 
+	// Return the Keccak256 hash of the packed data
 	return crypto.Keccak256Hash(packed), nil
 }
 
 func txEncoder(op gethwrappers.ManyChainMultiSigOp) (common.Hash, error) {
-	// ABI definition for the transaction tuple
-	abiJSON := `[{
-		"name": "tx",
-		"type": "function",
-		"inputs": [
-			{"name": "domainSeparator", "type": "bytes32"},
-			{"name": "tx", "type": "tuple(uint256 chainId, address multisig, uint64 nonce, address to, uint256 value, bytes data)"}
-		]
-	}]`
-
-	parsedABI, err := abi.JSON(strings.NewReader(abiJSON))
+	// Define the tuple type using abi.NewType
+	bytes32Type, err := abi.NewType("bytes32", "", nil)
 	if err != nil {
 		return common.Hash{}, err
 	}
 
+	// Define the tuple type
+	tupleType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+		{Name: "chainId", Type: "uint256"},
+		{Name: "multiSig", Type: "address"},
+		{Name: "nonce", Type: "uint40"},
+		{Name: "to", Type: "address"},
+		{Name: "value", Type: "uint256"},
+		{Name: "data", Type: "bytes"},
+	})
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	// Create an Arguments object representing the tuple in the correct order
+	args := abi.Arguments{
+		{
+			Type: bytes32Type,
+		},
+		{
+			Type: tupleType,
+		},
+	}
+
 	// Pack the data using abi.Pack
-	packed, err := parsedABI.Pack("tx",
+	packed, err := args.Pack(
 		MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP,
 		op,
 	)

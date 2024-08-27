@@ -1,7 +1,6 @@
 package executable
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -18,7 +17,6 @@ func TestNewMerkleTree(t *testing.T) {
 	}
 
 	tree := NewMerkleTree(leaves)
-	fmt.Println(tree.Root.String())
 
 	assert.NotNil(t, tree)
 	assert.Equal(t, 2, len(tree.Layers)) // 4 leaves -> 2 intermediate layers + 1 root layer
@@ -74,11 +72,7 @@ func TestGetProof_EvenNumberOfLeaves(t *testing.T) {
 		computedHash := leaf
 		for _, siblingHash := range proof {
 			// Sort the pair of hashes before hashing
-			if computedHash.String() > siblingHash.String() {
-				computedHash = crypto.Keccak256Hash(siblingHash.Bytes(), computedHash.Bytes())
-			} else {
-				computedHash = crypto.Keccak256Hash(computedHash.Bytes(), siblingHash.Bytes())
-			}
+			computedHash = hashPair(computedHash, siblingHash)
 		}
 		assert.Equal(t, tree.Root, computedHash)
 	}
@@ -102,11 +96,7 @@ func TestGetProof_OddNumberOfLeaves(t *testing.T) {
 		computedHash := leaf
 		for _, siblingHash := range proof {
 			// Sort the pair of hashes before hashing
-			if computedHash.String() > siblingHash.String() {
-				computedHash = crypto.Keccak256Hash(siblingHash.Bytes(), computedHash.Bytes())
-			} else {
-				computedHash = crypto.Keccak256Hash(computedHash.Bytes(), siblingHash.Bytes())
-			}
+			computedHash = hashPair(computedHash, siblingHash)
 		}
 		assert.Equal(t, tree.Root, computedHash)
 	}
@@ -132,11 +122,7 @@ func TestGetProof_OddIntermediateLayer(t *testing.T) {
 		computedHash := leaf
 		for _, siblingHash := range proof {
 			// Sort the pair of hashes before hashing
-			if computedHash.String() > siblingHash.String() {
-				computedHash = crypto.Keccak256Hash(siblingHash.Bytes(), computedHash.Bytes())
-			} else {
-				computedHash = crypto.Keccak256Hash(computedHash.Bytes(), siblingHash.Bytes())
-			}
+			computedHash = hashPair(computedHash, siblingHash)
 		}
 		assert.Equal(t, tree.Root, computedHash)
 	}

@@ -27,6 +27,10 @@ func NewSignatureFromBytes(sig []byte) (Signature, error) {
 }
 
 func (s Signature) ToGethSignature() gethwrappers.ManyChainMultiSigSignature {
+	if s.V < 2 {
+		s.V += 27
+	}
+
 	return gethwrappers.ManyChainMultiSigSignature{
 		R: [32]byte(s.R.Bytes()),
 		S: [32]byte(s.S.Bytes()),

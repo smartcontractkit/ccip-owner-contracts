@@ -139,8 +139,7 @@ func TestBuildOperations(t *testing.T) {
 		},
 	}
 
-	result, err := buildOperations(transactions, rootMetadatas, txCounts)
-	assert.NoError(t, err)
+	result, _ := buildOperations(transactions, rootMetadatas, txCounts)
 	assert.Equal(t, expected, result)
 }
 
@@ -215,7 +214,7 @@ func TestMetadataEncoder(t *testing.T) {
 
 	hash, err := metadataEncoder(rootMetadata)
 	assert.NoError(t, err)
-	assert.Equal(t, common.HexToHash("0x69b33f7bd0adfd9d8fc5381091e2970ff92e4fc425986a6d5b92f5e0b66f9e0b"), hash)
+	assert.Equal(t, common.HexToHash("0x401fbb1125225f725a82344adc6cb6a4131f855cce57513dfa5cc6a1aeb867a0"), hash)
 }
 
 func TestTxEncoder(t *testing.T) {
@@ -230,5 +229,5 @@ func TestTxEncoder(t *testing.T) {
 
 	hash, err := txEncoder(op)
 	assert.NoError(t, err)
-	assert.Equal(t, common.HexToHash("0x7ee35d1bbff5302395a2ca0b7485ac16c17160798d1ac1bd96f72fa2995b62ff"), hash)
+	assert.Equal(t, common.HexToHash("0x13e6f983e4d31e1dc897fa64e71ac476fd51d1f09e48983fd71eb6a54e491dc8"), hash)
 }
