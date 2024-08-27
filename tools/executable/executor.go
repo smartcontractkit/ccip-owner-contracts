@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/configwrappers"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 )
@@ -71,24 +72,24 @@ func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
 	return crypto.Keccak256Hash(data)
 }
 
-func (e *Executor) ValidateSignatures() error {
+func (e *Executor) ValidateSignatures() (bool, error) {
 	hash, err := e.SigningHash()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	recoveredSigners := make([]common.Address, len(e.Proposal.Signatures))
 	for i, sig := range e.Proposal.Signatures {
 		recoveredAddr, err := sig.Recover(hash)
 		if err != nil {
-			return err
+			return false, err
 		}
 		recoveredSigners[i] = recoveredAddr
 	}
 
 	configs, err := e.Caller.GetConfigs()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	// Validate that all signers are valid
@@ -103,7 +104,7 @@ func (e *Executor) ValidateSignatures() error {
 			}
 
 			if !found {
-				return &errors.ErrInvalidSignature{
+				return false, &errors.ErrInvalidSignature{
 					ChainIdentifier:  chain,
 					RecoveredAddress: signer,
 				}
@@ -111,7 +112,42 @@ func (e *Executor) ValidateSignatures() error {
 		}
 	}
 
-	return nil
+	// Validate if the quorum is met
+	wrappedConfigs := mapMCMSConfigs(configs)
+	for chain, config := range wrappedConfigs {
+		if !isReadyToSetRoot(config, recoveredSigners) {
+			return false, &errors.ErrQuorumNotMet{
+				ChainIdentifier: chain,
+			}
+		}
+	}
+
+	return true, nil
+}
+
+func isReadyToSetRoot(rootGroup configwrappers.Config, recoveredSigners []common.Address) bool {
+	return isGroupAtConsensus(rootGroup, recoveredSigners)
+}
+
+func isGroupAtConsensus(group configwrappers.Config, recoveredSigners []common.Address) bool {
+	signerApprovalsInGroup := 0
+	for _, signer := range group.Signers {
+		for _, recoveredSigner := range recoveredSigners {
+			if signer == recoveredSigner {
+				signerApprovalsInGroup++
+				break
+			}
+		}
+	}
+
+	groupApprovals := 0
+	for _, groupSigner := range group.GroupSigners {
+		if isGroupAtConsensus(groupSigner, recoveredSigners) {
+			groupApprovals++
+		}
+	}
+
+	return (signerApprovalsInGroup + groupApprovals) >= int(group.Quorum)
 }
 
 func (e *Executor) SetRootOnChain(auth *bind.TransactOpts, chain string) (*types.Transaction, error) {

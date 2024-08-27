@@ -183,7 +183,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
-	err = executor.ValidateSignatures()
+	quorumMet, err := executor.ValidateSignatures()
+	assert.True(t, quorumMet)
 	assert.NoError(t, err)
 
 	// SetRoot on the contract
@@ -307,7 +308,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	}
 
 	// Validate the signatures
-	err = executor.ValidateSignatures()
+	quorumMet, err := executor.ValidateSignatures()
+	assert.True(t, quorumMet)
 	assert.NoError(t, err)
 
 	// SetRoot on the contract
@@ -436,7 +438,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
-	err = executor.ValidateSignatures()
+	quorumMet, err := executor.ValidateSignatures()
+	assert.True(t, quorumMet)
 	assert.NoError(t, err)
 
 	// SetRoot on the contract
@@ -574,7 +577,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 
 	// Validate the signatures
-	err = executor.ValidateSignatures()
+	quorumMet, err := executor.ValidateSignatures()
+	assert.True(t, quorumMet)
 	assert.NoError(t, err)
 
 	// SetRoot on the contract

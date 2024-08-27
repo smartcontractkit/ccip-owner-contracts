@@ -3,6 +3,7 @@ package executable
 import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/configwrappers"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 )
 
@@ -42,6 +43,14 @@ func mapHashes(hashes []common.Hash) [][32]byte {
 	m := make([][32]byte, len(hashes))
 	for i, h := range hashes {
 		m[i] = [32]byte(h)
+	}
+	return m
+}
+
+func mapMCMSConfigs(configs map[string]gethwrappers.ManyChainMultiSigConfig) map[string]configwrappers.Config {
+	m := make(map[string]configwrappers.Config)
+	for k, v := range configs {
+		m[k] = *configwrappers.NewConfigFromRaw(v)
 	}
 	return m
 }

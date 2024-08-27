@@ -129,3 +129,11 @@ type ErrInvalidMCMSConfig struct {
 func (e *ErrInvalidMCMSConfig) Error() string {
 	return fmt.Sprintf("invalid MCMS config: %s", e.Reason)
 }
+
+type ErrQuorumNotMet struct {
+	ChainIdentifier string
+}
+
+func (e *ErrQuorumNotMet) Error() string {
+	return fmt.Sprintf("quorum not met for chain %s", e.ChainIdentifier)
+}
