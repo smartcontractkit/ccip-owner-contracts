@@ -72,6 +72,32 @@ func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
 	return crypto.Keccak256Hash(data)
 }
 
+func (e *Executor) ValidateMCMSConfigs() error {
+	configs, err := e.Caller.GetConfigs()
+	if err != nil {
+		return err
+	}
+
+	wrappedConfigs := mapMCMSConfigs(configs)
+
+	// Validate that all configs are equivalent
+	sortedChains := sortedChainIdentifiers(e.Proposal.ChainMetadata)
+	for i, chain := range sortedChains {
+		if i == 0 {
+			continue
+		}
+
+		if !wrappedConfigs[chain].Equals(wrappedConfigs[sortedChains[i-1]]) {
+			return &errors.ErrInconsistentConfigs{
+				ChainIdentifierA: chain,
+				ChainIdentifierB: sortedChains[i-1],
+			}
+		}
+	}
+
+	return nil
+}
+
 func (e *Executor) ValidateSignatures() (bool, error) {
 	hash, err := e.SigningHash()
 	if err != nil {
@@ -115,7 +141,7 @@ func (e *Executor) ValidateSignatures() (bool, error) {
 	// Validate if the quorum is met
 	wrappedConfigs := mapMCMSConfigs(configs)
 	for chain, config := range wrappedConfigs {
-		if !isReadyToSetRoot(config, recoveredSigners) {
+		if !isReadyToSetRoot(*config, recoveredSigners) {
 			return false, &errors.ErrQuorumNotMet{
 				ChainIdentifier: chain,
 			}

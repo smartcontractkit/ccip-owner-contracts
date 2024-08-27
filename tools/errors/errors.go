@@ -137,3 +137,12 @@ type ErrQuorumNotMet struct {
 func (e *ErrQuorumNotMet) Error() string {
 	return fmt.Sprintf("quorum not met for chain %s", e.ChainIdentifier)
 }
+
+type ErrInconsistentConfigs struct {
+	ChainIdentifierA string
+	ChainIdentifierB string
+}
+
+func (e *ErrInconsistentConfigs) Error() string {
+	return fmt.Sprintf("inconsistent configs for chains %s and %s", e.ChainIdentifierA, e.ChainIdentifierB)
+}

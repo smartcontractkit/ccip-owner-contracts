@@ -47,10 +47,10 @@ func mapHashes(hashes []common.Hash) [][32]byte {
 	return m
 }
 
-func mapMCMSConfigs(configs map[string]gethwrappers.ManyChainMultiSigConfig) map[string]configwrappers.Config {
-	m := make(map[string]configwrappers.Config)
+func mapMCMSConfigs(configs map[string]gethwrappers.ManyChainMultiSigConfig) map[string]*configwrappers.Config {
+	m := make(map[string]*configwrappers.Config)
 	for k, v := range configs {
-		m[k] = *configwrappers.NewConfigFromRaw(v)
+		m[k] = configwrappers.NewConfigFromRaw(v)
 	}
 	return m
 }

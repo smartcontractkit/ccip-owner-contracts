@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/configwrappers"
+	owner_errors "github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 	"github.com/stretchr/testify/assert"
 )
@@ -623,4 +624,205 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		assert.NoError(t, err)
 		assert.Equal(t, mcms.Address(), roleMember)
 	}
+}
+
+func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *testing.T) {
+	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
+	assert.NoError(t, err)
+	assert.NotNil(t, sim)
+	assert.NotNil(t, mcms)
+	for i := 0; i < 3; i++ {
+		assert.NotNil(t, keys[i])
+		assert.NotNil(t, auths[i])
+	}
+
+	// Deploy a timelock contract for testing
+	addr, tx, timelock, err := gethwrappers.DeployRBACTimelock(
+		auths[0],
+		sim.Client(),
+		big.NewInt(0),
+		mcms.Address(),
+		[]common.Address{},
+		[]common.Address{},
+		[]common.Address{},
+		[]common.Address{},
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, addr)
+	assert.NotNil(t, tx)
+	assert.NotNil(t, timelock)
+	sim.Commit()
+
+	// Construct example transactions
+	proposerRole, err := timelock.PROPOSERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	bypasserRole, err := timelock.BYPASSERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	cancellerRole, err := timelock.CANCELLERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	executorRole, err := timelock.EXECUTORROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	assert.NoError(t, err)
+
+	operations := make([]ChainOperation, 4)
+	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
+		data, err := timelockAbi.Pack("grantRole", role, mcms.Address())
+		assert.NoError(t, err)
+		operations[i] = ChainOperation{
+			ChainIdentifier: "1337",
+			Operation: Operation{
+				To:    timelock.Address(),
+				Value: 0,
+				Data:  common.Bytes2Hex(data),
+			},
+		}
+	}
+
+	// Construct a proposal
+	proposal := ExecutableMCMSProposal{
+		ExecutableMCMSProposalBase: ExecutableMCMSProposalBase{
+			Version:              "1.0",
+			ValidUntil:           2004259681,
+			Signatures:           []Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[string]ExecutableMCMSChainMetadata{
+				"1337": {
+					NonceOffset: 0,
+					MCMAddress:  mcms.Address(),
+				},
+			},
+		},
+		Transactions: operations,
+	}
+
+	// Construct executor
+	executor, err := proposal.ToExecutor(map[string]ContractDeployBackend{"1337": sim.Client()})
+	assert.NoError(t, err)
+	assert.NotNil(t, executor)
+
+	// Get the hash to sign
+	hash, err := executor.SigningHash()
+	assert.NoError(t, err)
+
+	// Sign the hash
+	for i := 0; i < 2; i++ {
+		sig, err := crypto.Sign(hash.Bytes(), keys[i])
+		assert.NoError(t, err)
+
+		// Construct a signature
+		sigObj, err := NewSignatureFromBytes(sig)
+		assert.NoError(t, err)
+		proposal.Signatures = append(proposal.Signatures, sigObj)
+	}
+
+	// Validate the signatures
+	quorumMet, err := executor.ValidateSignatures()
+	assert.False(t, quorumMet)
+	assert.Error(t, err)
+	// assert error is of type ErrQuorumNotMet
+	assert.IsType(t, &owner_errors.ErrQuorumNotMet{}, err)
+}
+
+func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *testing.T) {
+	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
+	assert.NoError(t, err)
+	assert.NotNil(t, sim)
+	assert.NotNil(t, mcms)
+	for i := 0; i < 3; i++ {
+		assert.NotNil(t, keys[i])
+		assert.NotNil(t, auths[i])
+	}
+
+	// Generate a new key
+	newKey, err := crypto.GenerateKey()
+	assert.NoError(t, err)
+	keys[2] = newKey
+
+	// Deploy a timelock contract for testing
+	addr, tx, timelock, err := gethwrappers.DeployRBACTimelock(
+		auths[0],
+		sim.Client(),
+		big.NewInt(0),
+		mcms.Address(),
+		[]common.Address{},
+		[]common.Address{},
+		[]common.Address{},
+		[]common.Address{},
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, addr)
+	assert.NotNil(t, tx)
+	assert.NotNil(t, timelock)
+	sim.Commit()
+
+	// Construct example transactions
+	proposerRole, err := timelock.PROPOSERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	bypasserRole, err := timelock.BYPASSERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	cancellerRole, err := timelock.CANCELLERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	executorRole, err := timelock.EXECUTORROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	assert.NoError(t, err)
+
+	operations := make([]ChainOperation, 4)
+	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
+		data, err := timelockAbi.Pack("grantRole", role, mcms.Address())
+		assert.NoError(t, err)
+		operations[i] = ChainOperation{
+			ChainIdentifier: "1337",
+			Operation: Operation{
+				To:    timelock.Address(),
+				Value: 0,
+				Data:  common.Bytes2Hex(data),
+			},
+		}
+	}
+
+	// Construct a proposal
+	proposal := ExecutableMCMSProposal{
+		ExecutableMCMSProposalBase: ExecutableMCMSProposalBase{
+			Version:              "1.0",
+			ValidUntil:           2004259681,
+			Signatures:           []Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[string]ExecutableMCMSChainMetadata{
+				"1337": {
+					NonceOffset: 0,
+					MCMAddress:  mcms.Address(),
+				},
+			},
+		},
+		Transactions: operations,
+	}
+
+	// Construct executor
+	executor, err := proposal.ToExecutor(map[string]ContractDeployBackend{"1337": sim.Client()})
+	assert.NoError(t, err)
+	assert.NotNil(t, executor)
+
+	// Get the hash to sign
+	hash, err := executor.SigningHash()
+	assert.NoError(t, err)
+
+	// Sign the hash
+	for i := 0; i < 3; i++ {
+		sig, err := crypto.Sign(hash.Bytes(), keys[i])
+		assert.NoError(t, err)
+
+		// Construct a signature
+		sigObj, err := NewSignatureFromBytes(sig)
+		assert.NoError(t, err)
+		proposal.Signatures = append(proposal.Signatures, sigObj)
+	}
+
+	// Validate the signatures
+	quorumMet, err := executor.ValidateSignatures()
+	assert.False(t, quorumMet)
+	assert.Error(t, err)
+	// assert error is of type ErrQuorumNotMet
+	assert.IsType(t, &owner_errors.ErrInvalidSignature{}, err)
 }

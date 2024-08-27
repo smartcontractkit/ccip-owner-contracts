@@ -103,6 +103,57 @@ func (c *Config) ToRawConfig() gethwrappers.ManyChainMultiSigConfig {
 	}
 }
 
+func (c *Config) Equals(other *Config) bool {
+	if c.Quorum != other.Quorum {
+		return false
+	}
+
+	if len(c.Signers) != len(other.Signers) {
+		return false
+	}
+
+	// Compare signers (order doesn't matter)
+	if !unorderedArrayEquals(c.Signers, other.Signers) {
+		return false
+	}
+
+	if len(c.GroupSigners) != len(other.GroupSigners) {
+		return false
+	}
+
+	// Compare all group signers in first exist in second (order doesn't matter)
+	for i := range c.GroupSigners {
+		found := false
+		for j := range other.GroupSigners {
+			if c.GroupSigners[i].Equals(&other.GroupSigners[j]) {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return false
+		}
+	}
+
+	// Compare all group signers in second exist in first (order doesn't matter)
+	for i := range other.GroupSigners {
+		found := false
+		for j := range c.GroupSigners {
+			if other.GroupSigners[i].Equals(&c.GroupSigners[j]) {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (c *Config) ExtractSetConfigInputs() ([32]uint8, [32]uint8, []common.Address, []uint8) {
 	var groupQuorums, groupParents, signerGroups []uint8 = []uint8{}, []uint8{}, []uint8{}
 	var signers []common.Address = []common.Address{}
@@ -160,4 +211,35 @@ func extractGroupsAndSigners(group *Config, parentIdx int, groupQuorums *[]uint8
 	for _, groupSigner := range group.GroupSigners {
 		extractGroupsAndSigners(&groupSigner, currentGroupIdx, groupQuorums, groupParents, signers, signerGroups)
 	}
+}
+
+func unorderedArrayEquals[T comparable](a, b []T) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	aMap := make(map[T]struct{})
+	bMap := make(map[T]struct{})
+
+	for _, i := range a {
+		aMap[i] = struct{}{}
+	}
+
+	for _, i := range b {
+		bMap[i] = struct{}{}
+	}
+
+	for _, i := range a {
+		if _, ok := bMap[i]; !ok {
+			return false
+		}
+	}
+
+	for _, i := range b {
+		if _, ok := aMap[i]; !ok {
+			return false
+		}
+	}
+
+	return true
 }

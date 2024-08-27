@@ -256,3 +256,50 @@ func TestExtractSetConfigInputs_UnsortedSignersAndGroups(t *testing.T) {
 	assert.Equal(t, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2"), common.HexToAddress("0x3"), common.HexToAddress("0x4"), common.HexToAddress("0x5")}, signerAddresses)
 	assert.Equal(t, []uint8{0, 0, 1, 2, 3}, signerGroups)
 }
+
+func TestConfigEquals_Success(t *testing.T) {
+	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
+	groupSigners := []Config{
+		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
+	}
+	config1 := NewConfig(2, signers, groupSigners)
+	config2 := NewConfig(2, signers, groupSigners)
+
+	assert.True(t, config1.Equals(config2))
+}
+func TestConfigEquals_Failure_MismatchingQuorum(t *testing.T) {
+	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
+	groupSigners := []Config{
+		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
+	}
+	config1 := NewConfig(2, signers, groupSigners)
+	config2 := NewConfig(1, signers, groupSigners)
+
+	assert.False(t, config1.Equals(config2))
+}
+
+func TestConfigEquals_Failure_MismatchingSigners(t *testing.T) {
+	signers1 := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
+	signers2 := []common.Address{common.HexToAddress("0x1")}
+	groupSigners := []Config{
+		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
+	}
+	config1 := NewConfig(2, signers1, groupSigners)
+	config2 := NewConfig(2, signers2, groupSigners)
+
+	assert.False(t, config1.Equals(config2))
+}
+
+func TestConfigEquals_Failure_MismatchingGroupSigners(t *testing.T) {
+	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
+	groupSigners1 := []Config{
+		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
+	}
+	groupSigners2 := []Config{
+		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x4")}},
+	}
+	config1 := NewConfig(2, signers, groupSigners1)
+	config2 := NewConfig(2, signers, groupSigners2)
+
+	assert.False(t, config1.Equals(config2))
+}
