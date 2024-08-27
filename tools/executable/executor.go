@@ -2,6 +2,7 @@ package executable
 
 import (
 	"encoding/binary"
+	"sort"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -126,12 +127,25 @@ func (e *Executor) SetRootOnChain(auth *bind.TransactOpts, chain string) (*types
 		return nil, err
 	}
 
+	hash, err := e.SigningHash()
+	if err != nil {
+		return nil, err
+	}
+
+	// Sort signatures by recovered address
+	sortedSignatures := e.Proposal.Signatures
+	sort.Slice(sortedSignatures, func(i, j int) bool {
+		recoveredSignerA, _ := sortedSignatures[i].Recover(hash)
+		recoveredSignerB, _ := sortedSignatures[j].Recover(hash)
+		return recoveredSignerA.Cmp(recoveredSignerB) < 0
+	})
+
 	return e.Caller.Callers[chain].SetRoot(
 		auth,
 		[32]byte(e.Tree.Root.Bytes()),
 		e.Proposal.ValidUntil, metadata,
 		mapHashes(proof),
-		mapSignatures(e.Proposal.Signatures),
+		mapSignatures(sortedSignatures),
 	)
 }
 

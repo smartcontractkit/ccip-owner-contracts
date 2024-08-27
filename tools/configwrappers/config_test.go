@@ -220,3 +220,39 @@ func TestExtractSetConfigInputs_NestedSignersAndGroups(t *testing.T) {
 	assert.Equal(t, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2"), common.HexToAddress("0x3"), common.HexToAddress("0x4"), common.HexToAddress("0x5")}, signerAddresses)
 	assert.Equal(t, []uint8{0, 0, 1, 2, 3}, signerGroups)
 }
+
+// Test case 5: Valid configuration with unsorted signers and groups
+// Configuration:
+// Quorum: 2
+// Signers: [0x2, 0x1]
+//
+//		Group signers: [{
+//			Quorum: 1
+//			Signers: [0x3]
+//			Group signers: [{
+//				Quorum: 1
+//				Signers: [0x4]
+//				Group signers: []
+//			}]
+//		},
+//	 	{
+//			Quorum: 1
+//			Signers: [0x5]
+//			Group signers: []
+//		}]
+func TestExtractSetConfigInputs_UnsortedSignersAndGroups(t *testing.T) {
+	signers := []common.Address{common.HexToAddress("0x2"), common.HexToAddress("0x1")}
+	groupSigners := []Config{
+		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}, GroupSigners: []Config{
+			{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x4")}},
+		}},
+		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x5")}},
+	}
+	config := NewConfig(2, signers, groupSigners)
+	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
+
+	assert.Equal(t, [32]uint8{2, 1, 1, 1}, groupQuorums)
+	assert.Equal(t, [32]uint8{0, 0, 1, 0}, groupParents)
+	assert.Equal(t, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2"), common.HexToAddress("0x3"), common.HexToAddress("0x4"), common.HexToAddress("0x5")}, signerAddresses)
+	assert.Equal(t, []uint8{0, 0, 1, 2, 3}, signerGroups)
+}

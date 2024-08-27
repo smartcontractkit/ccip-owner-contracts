@@ -1,6 +1,9 @@
 package configwrappers
 
 import (
+	"math/big"
+	"sort"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
@@ -112,7 +115,31 @@ func (c *Config) ExtractSetConfigInputs() ([32]uint8, [32]uint8, []common.Addres
 		groupParents = append(groupParents, 0)
 	}
 
-	return [32]uint8(groupQuorums), [32]uint8(groupParents), signers, signerGroups
+	// Combine SignerAddresses and SignerGroups into a slice of Signer structs
+	signerObjs := make([]gethwrappers.ManyChainMultiSigSigner, len(signers))
+	for i := range signers {
+		signerObjs[i] = gethwrappers.ManyChainMultiSigSigner{
+			Addr:  signers[i],
+			Group: signerGroups[i],
+		}
+	}
+
+	// Sort signers by their addresses in ascending order
+	sort.Slice(signerObjs, func(i, j int) bool {
+		addressA := new(big.Int).SetBytes(signerObjs[i].Addr.Bytes())
+		addressB := new(big.Int).SetBytes(signerObjs[j].Addr.Bytes())
+		return addressA.Cmp(addressB) < 0
+	})
+
+	// Extract the ordered addresses and groups after sorting
+	orderedSignerAddresses := make([]common.Address, len(signers))
+	orderedSignerGroups := make([]uint8, len(signers))
+	for i, signer := range signerObjs {
+		orderedSignerAddresses[i] = signer.Addr
+		orderedSignerGroups[i] = signer.Group
+	}
+
+	return [32]uint8(groupQuorums), [32]uint8(groupParents), orderedSignerAddresses, orderedSignerGroups
 }
 
 func extractGroupsAndSigners(group *Config, parentIdx int, groupQuorums *[]uint8, groupParents *[]uint8, signers *[]common.Address, signerGroups *[]uint8) {

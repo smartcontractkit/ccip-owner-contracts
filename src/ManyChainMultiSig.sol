@@ -398,11 +398,11 @@ contract ManyChainMultiSig is Ownable2Step {
         bool clearRoot
     ) external onlyOwner {
         if (signerAddresses.length == 0 || signerAddresses.length > MAX_NUM_SIGNERS) {
-            revert OutOfBoundsNumOfSigners();
+            revert("OutOfBoundsNumOfSigners()");
         }
 
         if (signerAddresses.length != signerGroups.length) {
-            revert SignerGroupsLengthMismatch();
+            revert("SignerGroupsLengthMismatch()");
         }
 
         {
@@ -412,7 +412,7 @@ contract ManyChainMultiSig is Ownable2Step {
             // first, we count the signers as children
             for (uint256 i = 0; i < signerGroups.length; i++) {
                 if (signerGroups[i] >= NUM_GROUPS) {
-                    revert OutOfBoundsGroup();
+                    revert("OutOfBoundsGroup()");
                 }
                 groupChildrenCounts[signerGroups[i]]++;
             }
@@ -422,18 +422,18 @@ contract ManyChainMultiSig is Ownable2Step {
                 uint256 i = NUM_GROUPS - 1 - j;
                 // ensure we have a well-formed group tree. the root should have itself as parent
                 if ((i != 0 && groupParents[i] >= i) || (i == 0 && groupParents[i] != 0)) {
-                    revert GroupTreeNotWellFormed();
+                    revert("GroupTreeNotWellFormed()");
                 }
                 bool disabled = groupQuorums[i] == 0;
                 if (disabled) {
                     // a disabled group shouldn't have any children
                     if (0 < groupChildrenCounts[i]) {
-                        revert SignerInDisabledGroup();
+                        revert("SignerInDisabledGroup()");
                     }
                 } else {
                     // ensure that the group quorum can be met
                     if (groupChildrenCounts[i] < groupQuorums[i]) {
-                        revert OutOfBoundsGroupQuorum();
+                        revert("OutOfBoundsGroupQuorum()");
                     }
                     groupChildrenCounts[groupParents[i]]++;
                     // the above line clobbers groupChildrenCounts[0] in last iteration, don't use it after the loop ends
