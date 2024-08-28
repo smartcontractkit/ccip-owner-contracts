@@ -7,7 +7,12 @@ import (
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 )
 
-type ExecutableMCMSProposalBase struct {
+type ExecutableMCMSChainMetadata struct {
+	NonceOffset uint64         `json:"nonceOffset"`
+	MCMAddress  common.Address `json:"mcmAddress"`
+}
+
+type ExecutableMCMSProposal struct {
 	Version              string      `json:"version"`
 	ValidUntil           uint32      `json:"validUntil"`
 	Signatures           []Signature `json:"signatures"`
@@ -15,14 +20,12 @@ type ExecutableMCMSProposalBase struct {
 
 	// Map of chain identifier to chain metadata
 	ChainMetadata map[string]ExecutableMCMSChainMetadata `json:"chainMetadata"`
+
+	// Operations to be executed
+	Transactions []ChainOperation `json:"transactions"`
 }
 
-type ExecutableMCMSChainMetadata struct {
-	NonceOffset uint64         `json:"nonceOffset"`
-	MCMAddress  common.Address `json:"mcmAddress"`
-}
-
-func (m ExecutableMCMSProposalBase) Validate() error {
+func (m *ExecutableMCMSProposal) Validate() error {
 	if m.Version == "" {
 		return &errors.ErrInvalidVersion{
 			ReceivedVersion: m.Version,
@@ -41,21 +44,6 @@ func (m ExecutableMCMSProposalBase) Validate() error {
 
 	if len(m.ChainMetadata) == 0 {
 		return &errors.ErrNoChainMetadata{}
-	}
-
-	return nil
-}
-
-type ExecutableMCMSProposal struct {
-	ExecutableMCMSProposalBase
-
-	// Operations to be executed
-	Transactions []ChainOperation `json:"transactions"`
-}
-
-func (m *ExecutableMCMSProposal) Validate() error {
-	if err := m.ExecutableMCMSProposalBase.Validate(); err != nil {
-		return err
 	}
 
 	if len(m.Transactions) == 0 {

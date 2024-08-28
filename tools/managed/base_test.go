@@ -14,15 +14,13 @@ var TestChain = "chain1"
 func TestBaseMCMSProposal_Validate(t *testing.T) {
 	proposal := baseMCMSProposal{
 		ExecutableMCMSProposal: executable.ExecutableMCMSProposal{
-			ExecutableMCMSProposalBase: executable.ExecutableMCMSProposalBase{
-				Version:    "1.0.0",
-				ValidUntil: 2004259681,
-				Signatures: []executable.Signature{},
-				ChainMetadata: map[string]executable.ExecutableMCMSChainMetadata{
-					TestChain: {
-						NonceOffset: 1,
-						MCMAddress:  TestAddress,
-					},
+			Version:    "1.0.0",
+			ValidUntil: 2004259681,
+			Signatures: []executable.Signature{},
+			ChainMetadata: map[string]executable.ExecutableMCMSChainMetadata{
+				TestChain: {
+					NonceOffset: 1,
+					MCMAddress:  TestAddress,
 				},
 			},
 		},
@@ -53,15 +51,13 @@ func TestBaseMCMSProposal_Validate(t *testing.T) {
 func TestBaseMCMSProposal_Validate_InvalidBase(t *testing.T) {
 	proposal := baseMCMSProposal{
 		ExecutableMCMSProposal: executable.ExecutableMCMSProposal{
-			ExecutableMCMSProposalBase: executable.ExecutableMCMSProposalBase{
-				Version:    "",
-				ValidUntil: 2004259681,
-				Signatures: []executable.Signature{},
-				ChainMetadata: map[string]executable.ExecutableMCMSChainMetadata{
-					TestChain: {
-						NonceOffset: 1,
-						MCMAddress:  TestAddress,
-					},
+			Version:    "",
+			ValidUntil: 2004259681,
+			Signatures: []executable.Signature{},
+			ChainMetadata: map[string]executable.ExecutableMCMSChainMetadata{
+				TestChain: {
+					NonceOffset: 1,
+					MCMAddress:  TestAddress,
 				},
 			},
 		},
@@ -93,15 +89,13 @@ func TestBaseMCMSProposal_Validate_InvalidBase(t *testing.T) {
 func TestBaseMCMSProposal_Validate_InvalidDescription(t *testing.T) {
 	proposal := baseMCMSProposal{
 		ExecutableMCMSProposal: executable.ExecutableMCMSProposal{
-			ExecutableMCMSProposalBase: executable.ExecutableMCMSProposalBase{
-				Version:    "1.0.0",
-				ValidUntil: 2004259681,
-				Signatures: []executable.Signature{},
-				ChainMetadata: map[string]executable.ExecutableMCMSChainMetadata{
-					TestChain: {
-						NonceOffset: 1,
-						MCMAddress:  TestAddress,
-					},
+			Version:    "1.0.0",
+			ValidUntil: 2004259681,
+			Signatures: []executable.Signature{},
+			ChainMetadata: map[string]executable.ExecutableMCMSChainMetadata{
+				TestChain: {
+					NonceOffset: 1,
+					MCMAddress:  TestAddress,
 				},
 			},
 		},
@@ -133,15 +127,13 @@ func TestBaseMCMSProposal_Validate_InvalidDescription(t *testing.T) {
 func TestBaseMCMSProposal_Validate_MissingChainMetadataForTransaction(t *testing.T) {
 	proposal := baseMCMSProposal{
 		ExecutableMCMSProposal: executable.ExecutableMCMSProposal{
-			ExecutableMCMSProposalBase: executable.ExecutableMCMSProposalBase{
-				Version:    "1.0.0",
-				ValidUntil: 2004259681,
-				Signatures: []executable.Signature{},
-				ChainMetadata: map[string]executable.ExecutableMCMSChainMetadata{
-					TestChain: {
-						NonceOffset: 1,
-						MCMAddress:  TestAddress,
-					},
+			Version:    "1.0.0",
+			ValidUntil: 2004259681,
+			Signatures: []executable.Signature{},
+			ChainMetadata: map[string]executable.ExecutableMCMSChainMetadata{
+				TestChain: {
+					NonceOffset: 1,
+					MCMAddress:  TestAddress,
 				},
 			},
 		},
@@ -173,15 +165,13 @@ func TestBaseMCMSProposal_Validate_MissingChainMetadataForTransaction(t *testing
 func TestBaseMCMSProposal_AddSignature(t *testing.T) {
 	proposal := baseMCMSProposal{
 		ExecutableMCMSProposal: executable.ExecutableMCMSProposal{
-			ExecutableMCMSProposalBase: executable.ExecutableMCMSProposalBase{
-				Version:    "1.0.0",
-				ValidUntil: 2004259681,
-				Signatures: []executable.Signature{},
-				ChainMetadata: map[string]executable.ExecutableMCMSChainMetadata{
-					TestChain: {
-						NonceOffset: 1,
-						MCMAddress:  TestAddress,
-					},
+			Version:    "1.0.0",
+			ValidUntil: 2004259681,
+			Signatures: []executable.Signature{},
+			ChainMetadata: map[string]executable.ExecutableMCMSChainMetadata{
+				TestChain: {
+					NonceOffset: 1,
+					MCMAddress:  TestAddress,
 				},
 			},
 		},

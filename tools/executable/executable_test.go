@@ -11,16 +11,14 @@ var TestAddress = common.HexToAddress("0x1234567890abcdef")
 
 func TestExecutableMCMSProposal_Validate_Success(t *testing.T) {
 	proposal := &ExecutableMCMSProposal{
-		ExecutableMCMSProposalBase: ExecutableMCMSProposalBase{
-			Version:              "1.0",
-			ValidUntil:           2004259681,
-			Signatures:           []Signature{},
-			OverridePreviousRoot: false,
-			ChainMetadata: map[string]ExecutableMCMSChainMetadata{
-				"chain1": {
-					NonceOffset: 1,
-					MCMAddress:  TestAddress,
-				},
+		Version:              "1.0",
+		ValidUntil:           2004259681,
+		Signatures:           []Signature{},
+		OverridePreviousRoot: false,
+		ChainMetadata: map[string]ExecutableMCMSChainMetadata{
+			"chain1": {
+				NonceOffset: 1,
+				MCMAddress:  TestAddress,
 			},
 		},
 		Transactions: []ChainOperation{
@@ -42,16 +40,14 @@ func TestExecutableMCMSProposal_Validate_Success(t *testing.T) {
 
 func TestExecutableMCMSProposal_Validate_InvalidVersion(t *testing.T) {
 	proposal := &ExecutableMCMSProposal{
-		ExecutableMCMSProposalBase: ExecutableMCMSProposalBase{
-			Version:              "",
-			ValidUntil:           2004259681,
-			Signatures:           []Signature{},
-			OverridePreviousRoot: false,
-			ChainMetadata: map[string]ExecutableMCMSChainMetadata{
-				"chain1": {
-					NonceOffset: 1,
-					MCMAddress:  TestAddress,
-				},
+		Version:              "",
+		ValidUntil:           2004259681,
+		Signatures:           []Signature{},
+		OverridePreviousRoot: false,
+		ChainMetadata: map[string]ExecutableMCMSChainMetadata{
+			"chain1": {
+				NonceOffset: 1,
+				MCMAddress:  TestAddress,
 			},
 		},
 		Transactions: []ChainOperation{
@@ -74,16 +70,14 @@ func TestExecutableMCMSProposal_Validate_InvalidVersion(t *testing.T) {
 
 func TestExecutableMCMSProposal_Validate_InvalidValidUntil(t *testing.T) {
 	proposal := &ExecutableMCMSProposal{
-		ExecutableMCMSProposalBase: ExecutableMCMSProposalBase{
-			Version:              "1.0",
-			ValidUntil:           0,
-			Signatures:           []Signature{},
-			OverridePreviousRoot: false,
-			ChainMetadata: map[string]ExecutableMCMSChainMetadata{
-				"chain1": {
-					NonceOffset: 1,
-					MCMAddress:  TestAddress,
-				},
+		Version:              "1.0",
+		ValidUntil:           0,
+		Signatures:           []Signature{},
+		OverridePreviousRoot: false,
+		ChainMetadata: map[string]ExecutableMCMSChainMetadata{
+			"chain1": {
+				NonceOffset: 1,
+				MCMAddress:  TestAddress,
 			},
 		},
 		Transactions: []ChainOperation{
@@ -106,13 +100,11 @@ func TestExecutableMCMSProposal_Validate_InvalidValidUntil(t *testing.T) {
 
 func TestExecutableMCMSProposal_Validate_InvalidChainMetadata(t *testing.T) {
 	proposal := &ExecutableMCMSProposal{
-		ExecutableMCMSProposalBase: ExecutableMCMSProposalBase{
-			Version:              "1.0",
-			ValidUntil:           2004259681,
-			Signatures:           []Signature{},
-			OverridePreviousRoot: false,
-			ChainMetadata:        map[string]ExecutableMCMSChainMetadata{},
-		},
+		Version:              "1.0",
+		ValidUntil:           2004259681,
+		Signatures:           []Signature{},
+		OverridePreviousRoot: false,
+		ChainMetadata:        map[string]ExecutableMCMSChainMetadata{},
 		Transactions: []ChainOperation{
 			{
 				ChainIdentifier: "chain1",
@@ -133,16 +125,14 @@ func TestExecutableMCMSProposal_Validate_InvalidChainMetadata(t *testing.T) {
 
 func TestExecutableMCMSProposal_Validate_NoTransactions(t *testing.T) {
 	proposal := &ExecutableMCMSProposal{
-		ExecutableMCMSProposalBase: ExecutableMCMSProposalBase{
-			Version:              "1.0",
-			ValidUntil:           2004259681,
-			Signatures:           []Signature{},
-			OverridePreviousRoot: false,
-			ChainMetadata: map[string]ExecutableMCMSChainMetadata{
-				"chain1": {
-					NonceOffset: 1,
-					MCMAddress:  TestAddress,
-				},
+		Version:              "1.0",
+		ValidUntil:           2004259681,
+		Signatures:           []Signature{},
+		OverridePreviousRoot: false,
+		ChainMetadata: map[string]ExecutableMCMSChainMetadata{
+			"chain1": {
+				NonceOffset: 1,
+				MCMAddress:  TestAddress,
 			},
 		},
 		Transactions: []ChainOperation{},
@@ -156,16 +146,14 @@ func TestExecutableMCMSProposal_Validate_NoTransactions(t *testing.T) {
 
 func TestExecutableMCMSProposal_Validate_MissingChainMetadataForTransaction(t *testing.T) {
 	proposal := &ExecutableMCMSProposal{
-		ExecutableMCMSProposalBase: ExecutableMCMSProposalBase{
-			Version:              "1.0",
-			ValidUntil:           2004259681,
-			Signatures:           []Signature{},
-			OverridePreviousRoot: false,
-			ChainMetadata: map[string]ExecutableMCMSChainMetadata{
-				"chain1": {
-					NonceOffset: 1,
-					MCMAddress:  TestAddress,
-				},
+		Version:              "1.0",
+		ValidUntil:           2004259681,
+		Signatures:           []Signature{},
+		OverridePreviousRoot: false,
+		ChainMetadata: map[string]ExecutableMCMSChainMetadata{
+			"chain1": {
+				NonceOffset: 1,
+				MCMAddress:  TestAddress,
 			},
 		},
 		Transactions: []ChainOperation{

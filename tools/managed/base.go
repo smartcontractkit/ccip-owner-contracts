@@ -1,6 +1,8 @@
 package managed
 
 import (
+	"time"
+
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/executable"
 )
@@ -20,8 +22,28 @@ type baseMCMSProposal struct {
 }
 
 func (m *baseMCMSProposal) Validate() error {
-	if err := m.ExecutableMCMSProposal.ExecutableMCMSProposalBase.Validate(); err != nil {
-		return err
+	if m.Version == "" {
+		return &errors.ErrInvalidVersion{
+			ReceivedVersion: m.Version,
+		}
+	}
+
+	// Get the current Unix timestamp as an int64
+	currentTime := time.Now().Unix()
+
+	if m.ValidUntil <= uint32(currentTime) {
+		// ValidUntil is a Unix timestamp, so it should be greater than the current time
+		return &errors.ErrInvalidValidUntil{
+			ReceivedValidUntil: m.ValidUntil,
+		}
+	}
+
+	if len(m.ChainMetadata) == 0 {
+		return &errors.ErrNoChainMetadata{}
+	}
+
+	if len(m.Transactions) == 0 {
+		return &errors.ErrNoTransactions{}
 	}
 
 	if m.Description == "" {
@@ -48,8 +70,12 @@ func (m *baseMCMSProposal) AddSignature(sig executable.Signature) {
 
 func (m *baseMCMSProposal) ToExecutableMCMSProposal() executable.ExecutableMCMSProposal {
 	raw := executable.ExecutableMCMSProposal{
-		ExecutableMCMSProposalBase: m.ExecutableMCMSProposalBase,
-		Transactions:               make([]executable.ChainOperation, 0),
+		Version:              m.Version,
+		ValidUntil:           m.ValidUntil,
+		Signatures:           m.Signatures,
+		OverridePreviousRoot: m.OverridePreviousRoot,
+		Transactions:         make([]executable.ChainOperation, 0),
+		ChainMetadata:        make(map[string]executable.ExecutableMCMSChainMetadata),
 	}
 
 	for k, v := range m.ChainMetadata {

@@ -51,19 +51,21 @@ func (t *MerkleTree) GetProof(hash common.Hash) ([]common.Hash, error) {
 	for i := 0; i < len(t.Layers); i++ {
 		found := false
 		for j, h := range t.Layers[i] {
-			if h == targetHash {
-				// Get the sibling hash
-				siblingIdx := j ^ 1
-				siblingHash := t.Layers[i][siblingIdx]
-				proof = append(proof, siblingHash)
-
-				// Get next target hash by sorting the pair of hashes and hashing them
-				targetHash = hashPair(targetHash, siblingHash)
-
-				// Move to the next layer
-				found = true
-				break
+			if h != targetHash {
+				continue
 			}
+
+			// Get the sibling hash
+			siblingIdx := j ^ 1
+			siblingHash := t.Layers[i][siblingIdx]
+			proof = append(proof, siblingHash)
+
+			// Get next target hash by sorting the pair of hashes and hashing them
+			targetHash = hashPair(targetHash, siblingHash)
+
+			// Move to the next layer
+			found = true
+			break
 		}
 
 		if !found {
