@@ -34,14 +34,6 @@ func (e *ErrInvalidMinDelay) Error() string {
 	return fmt.Sprintf("invalid min delay: %s", e.ReceivedMinDelay)
 }
 
-type ErrInvalidOperation struct {
-	Message string
-}
-
-func (e *ErrInvalidOperation) Error() string {
-	return fmt.Sprintf("invalid operation: %s", e.Message)
-}
-
 // ErrInvalidProposalType is used when an invalid proposal type is received.
 type ErrInvalidProposalType struct {
 	ReceivedProposalType string
