@@ -2,6 +2,7 @@ package executable
 
 import (
 	"encoding/binary"
+	"math/big"
 	"sort"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -19,18 +20,36 @@ type Executor struct {
 	RootMetadatas    map[string]gethwrappers.ManyChainMultiSigRootMetadata
 	Operations       map[string][]gethwrappers.ManyChainMultiSigOp
 	ChainAgnosticOps []gethwrappers.ManyChainMultiSigOp
-	Caller           *Caller
+	Callers          map[string]*gethwrappers.ManyChainMultiSig
 }
 
 func NewProposalExecutor(proposal *ExecutableMCMSProposal, clients map[string]ContractDeployBackend) (*Executor, error) {
 	txCounts := calculateTransactionCounts(proposal.Transactions)
+	mcms := mapMCMAddresses(proposal.ChainMetadata)
 
-	caller, err := NewCaller(mapMCMAddresses(proposal.ChainMetadata), clients)
-	if err != nil {
-		return nil, err
+	mcmsWrappers := make(map[string]*gethwrappers.ManyChainMultiSig)
+	for chain, mcmAddress := range mcms {
+		client, ok := clients[chain]
+		if !ok {
+			return nil, &errors.ErrMissingChainClient{
+				ChainIdentifier: chain,
+			}
+		}
+
+		mcms, err := gethwrappers.NewManyChainMultiSig(mcmAddress, client)
+		if err != nil {
+			return nil, err
+		}
+
+		mcmsWrappers[chain] = mcms
 	}
 
-	currentOpCounts, err := caller.GetCurrentOpCounts()
+	executor := &Executor{
+		Proposal: proposal,
+		Callers:  mcmsWrappers,
+	}
+
+	currentOpCounts, err := executor.GetCurrentOpCounts()
 	if err != nil {
 		return nil, err
 	}
@@ -44,14 +63,12 @@ func NewProposalExecutor(proposal *ExecutableMCMSProposal, clients map[string]Co
 	chainIdentifiers := sortedChainIdentifiers(proposal.ChainMetadata)
 	tree, err := buildMerkleTree(chainIdentifiers, rootMetadatas, ops)
 
-	return &Executor{
-		Proposal:         proposal,
-		Tree:             tree,
-		RootMetadatas:    rootMetadatas,
-		Operations:       ops,
-		ChainAgnosticOps: chainAgnosticOps,
-		Caller:           caller,
-	}, err
+	executor.Tree = tree
+	executor.RootMetadatas = rootMetadatas
+	executor.Operations = ops
+	executor.ChainAgnosticOps = chainAgnosticOps
+
+	return executor, err
 }
 
 func (e *Executor) SigningHash() (common.Hash, error) {
@@ -73,7 +90,7 @@ func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
 }
 
 func (e *Executor) ValidateMCMSConfigs() error {
-	configs, err := e.Caller.GetConfigs()
+	configs, err := e.GetConfigs()
 	if err != nil {
 		return err
 	}
@@ -98,6 +115,36 @@ func (e *Executor) ValidateMCMSConfigs() error {
 	return nil
 }
 
+func (m *Executor) GetCurrentOpCounts() (map[string]big.Int, error) {
+	opCounts := make(map[string]big.Int)
+
+	for chain, wrapper := range m.Callers {
+		opCount, err := wrapper.GetOpCount(&bind.CallOpts{})
+		if err != nil {
+			return nil, err
+		}
+
+		opCounts[chain] = *opCount
+	}
+
+	return opCounts, nil
+}
+
+func (m *Executor) GetConfigs() (map[string]gethwrappers.ManyChainMultiSigConfig, error) {
+	configs := make(map[string]gethwrappers.ManyChainMultiSigConfig)
+
+	for chain, wrapper := range m.Callers {
+		config, err := wrapper.GetConfig(&bind.CallOpts{})
+		if err != nil {
+			return nil, err
+		}
+
+		configs[chain] = config
+	}
+
+	return configs, nil
+}
+
 func (e *Executor) ValidateSignatures() (bool, error) {
 	hash, err := e.SigningHash()
 	if err != nil {
@@ -113,7 +160,7 @@ func (e *Executor) ValidateSignatures() (bool, error) {
 		recoveredSigners[i] = recoveredAddr
 	}
 
-	configs, err := e.Caller.GetConfigs()
+	configs, err := e.GetConfigs()
 	if err != nil {
 		return false, err
 	}
@@ -202,7 +249,7 @@ func (e *Executor) SetRootOnChain(auth *bind.TransactOpts, chain string) (*types
 		return recoveredSignerA.Cmp(recoveredSignerB) < 0
 	})
 
-	return e.Caller.Callers[chain].SetRoot(
+	return e.Callers[chain].SetRoot(
 		auth,
 		[32]byte(e.Tree.Root.Bytes()),
 		e.Proposal.ValidUntil, metadata,
@@ -226,7 +273,7 @@ func (e *Executor) ExecuteOnChain(auth *bind.TransactOpts, idx int) (*types.Tran
 		return nil, err
 	}
 
-	return e.Caller.Callers[chain].Execute(
+	return e.Callers[chain].Execute(
 		auth,
 		mcmOperation,
 		mapHashes(proof),
