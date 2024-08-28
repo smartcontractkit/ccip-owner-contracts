@@ -16,32 +16,6 @@ type ContractDeployBackend interface {
 	bind.DeployBackend
 }
 
-func DeployAndConfigureManyChainMultisig(auth *bind.TransactOpts, backend ContractDeployBackend, config *Config) (common.Address, []*types.Transaction, *WrappedManyChainMultisig, error) {
-	mcmsAddress, tx, mcmsObj, err := DeployWrappedManyChainMultisig(auth, backend)
-	if err != nil {
-		return common.Address{}, nil, nil, err
-	}
-
-	// Wait for the contract to be mined
-	_, err = bind.WaitMined(auth.Context, backend, tx)
-	if err != nil {
-		return common.Address{}, []*types.Transaction{}, nil, err
-	}
-
-	setConfigTx, err := mcmsObj.SetConfig(auth, config) // TODO: can the same TransactOpts be used for both transactions?
-	if err != nil {
-		return common.Address{}, []*types.Transaction{tx}, mcmsObj, err
-	}
-
-	// Wait for the contract to be mined
-	_, err = bind.WaitMined(auth.Context, backend, setConfigTx)
-	if err != nil {
-		return common.Address{}, []*types.Transaction{tx, setConfigTx}, mcmsObj, err
-	}
-
-	return mcmsAddress, []*types.Transaction{tx, setConfigTx}, mcmsObj, err
-}
-
 func DeployWrappedManyChainMultisig(auth *bind.TransactOpts, backend ContractDeployBackend) (common.Address, *types.Transaction, *WrappedManyChainMultisig, error) {
 	mcmsAddress, tx, mcmsObj, err := gethwrappers.DeployManyChainMultiSig(auth, backend)
 	if err != nil {
