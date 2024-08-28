@@ -11,7 +11,6 @@ import (
 
 type Caller struct {
 	Callers map[string]*gethwrappers.ManyChainMultiSig
-	Clients map[string]ContractDeployBackend
 }
 
 func NewCaller(mcms map[string]common.Address, clients map[string]ContractDeployBackend) (*Caller, error) {
@@ -35,7 +34,6 @@ func NewCaller(mcms map[string]common.Address, clients map[string]ContractDeploy
 
 	return &Caller{
 		Callers: mcmsWrappers,
-		Clients: clients,
 	}, nil
 }
 

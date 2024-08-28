@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/configwrappers"
@@ -22,11 +22,11 @@ func setupSimulatedBackend() (*configwrappers.WrappedManyChainMultisig, *bind.Tr
 
 	auth.GasLimit = uint64(8000000)
 
-	genesisAlloc := map[common.Address]types.Account{
+	genesisAlloc := map[common.Address]core.GenesisAccount{
 		auth.From: {Balance: big.NewInt(1e18)},
 	}
 	blockGasLimit := uint64(8000000)
-	sim := simulated.NewBackend(genesisAlloc, simulated.WithBlockGasLimit(blockGasLimit))
+	sim := simulated.New(genesisAlloc, blockGasLimit)
 
 	// Deploy a ManyChainMultiSig contract
 	_, _, mcms, err := configwrappers.DeployWrappedManyChainMultisig(auth, sim.Client())

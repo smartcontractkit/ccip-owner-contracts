@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
@@ -35,12 +36,12 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	}
 
 	// Setup a simulated backend
-	genesisAlloc := map[common.Address]types.Account{}
+	genesisAlloc := map[common.Address]core.GenesisAccount{}
 	for _, auth := range auths {
-		genesisAlloc[auth.From] = types.Account{Balance: big.NewInt(1e18)}
+		genesisAlloc[auth.From] = core.GenesisAccount{Balance: big.NewInt(1e18)}
 	}
 	blockGasLimit := uint64(8000000)
-	sim := simulated.NewBackend(genesisAlloc, simulated.WithBlockGasLimit(blockGasLimit))
+	sim := simulated.New(genesisAlloc, blockGasLimit)
 
 	// Deploy a ManyChainMultiSig contract with any of the signers
 	_, tx, mcms, err := configwrappers.DeployWrappedManyChainMultisig(auths[0], sim.Client())
