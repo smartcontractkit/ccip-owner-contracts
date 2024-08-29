@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*bind.TransactOpts, *simulated.Backend, *configwrappers.WrappedManyChainMultisig, error) {
+func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*bind.TransactOpts, *simulated.Backend, *gethwrappers.ManyChainMultiSig, error) {
 	// Generate a private key
 	keys := make([]*ecdsa.PrivateKey, numSigners)
 	auths := make([]*bind.TransactOpts, numSigners)
@@ -44,7 +44,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	sim := simulated.New(genesisAlloc, blockGasLimit)
 
 	// Deploy a ManyChainMultiSig contract with any of the signers
-	_, tx, mcms, err := configwrappers.DeployWrappedManyChainMultisig(auths[0], sim.Client())
+	_, tx, mcms, err := gethwrappers.DeployManyChainMultiSig(auths[0], sim.Client())
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -68,12 +68,16 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	for i, auth := range auths {
 		signers[i] = auth.From
 	}
-	fmt.Println(signers)
-	tx, err = mcms.SetConfig(auths[0], &configwrappers.Config{
+
+	// Set the config
+	config := &configwrappers.Config{
 		Quorum:       uint8(numSigners),
 		Signers:      signers,
 		GroupSigners: []configwrappers.Config{},
-	})
+	}
+	quorums, parents, signersAddresses, signerGroups := config.ExtractSetConfigInputs()
+
+	tx, err = mcms.SetConfig(auths[0], signersAddresses, signerGroups, quorums, parents, false)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}

@@ -14,9 +14,7 @@ type MerkleTree struct {
 }
 
 func NewMerkleTree(leaves []common.Hash) *MerkleTree {
-	tree := &MerkleTree{
-		Layers: make([][]common.Hash, 0),
-	}
+	layers := make([][]common.Hash, 0)
 
 	currHashes := leaves
 	for len(currHashes) > 1 {
@@ -26,7 +24,7 @@ func NewMerkleTree(leaves []common.Hash) *MerkleTree {
 		}
 
 		// Append the current layer to the tree
-		tree.Layers = append(tree.Layers, currHashes)
+		layers = append(layers, currHashes)
 
 		// Calculate the parent hashes
 		tempHashes := make([]common.Hash, len(currHashes)/2)
@@ -40,8 +38,10 @@ func NewMerkleTree(leaves []common.Hash) *MerkleTree {
 	}
 
 	// Append the root hash to the tree
-	tree.Root = currHashes[0]
-	return tree
+	return &MerkleTree{
+		Root:   currHashes[0],
+		Layers: layers,
+	}
 }
 
 func (t *MerkleTree) GetProof(hash common.Hash) ([]common.Hash, error) {
