@@ -4,7 +4,6 @@ import (
 	"math/big"
 	"sort"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
@@ -139,85 +138,21 @@ func buildMerkleTree(
 }
 
 func metadataEncoder(rootMetadata gethwrappers.ManyChainMultiSigRootMetadata) (common.Hash, error) {
-	// Define the tuple type using abi.NewType
-	bytes32Type, err := abi.NewType("bytes32", "", nil)
+	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"preOpCount","type":"uint40"},{"name":"postOpCount","type":"uint40"},{"name":"overridePreviousRoot","type":"bool"}]}]`
+	encoded, err := ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA, rootMetadata)
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	// Define the tuple type
-	tupleType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
-		{Name: "chainId", Type: "uint256"},
-		{Name: "multiSig", Type: "address"},
-		{Name: "preOpCount", Type: "uint40"},
-		{Name: "postOpCount", Type: "uint40"},
-		{Name: "overridePreviousRoot", Type: "bool"},
-	})
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	// Create an Arguments object representing the tuple in the correct order
-	args := abi.Arguments{
-		{
-			Type: bytes32Type,
-		},
-		{
-			Type: tupleType,
-		},
-	}
-
-	// Pack the data
-	packed, err := args.Pack(
-		MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA,
-		rootMetadata,
-	)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	// Return the Keccak256 hash of the packed data
-	return crypto.Keccak256Hash(packed), nil
+	return crypto.Keccak256Hash(encoded), nil
 }
 
 func txEncoder(op gethwrappers.ManyChainMultiSigOp) (common.Hash, error) {
-	// Define the tuple type using abi.NewType
-	bytes32Type, err := abi.NewType("bytes32", "", nil)
+	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"nonce","type":"uint40"},{"name":"to","type":"address"},{"name":"value","type":"uint256"},{"name":"data","type":"bytes"}]}]`
+	encoded, err := ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP, op)
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	// Define the tuple type
-	tupleType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
-		{Name: "chainId", Type: "uint256"},
-		{Name: "multiSig", Type: "address"},
-		{Name: "nonce", Type: "uint40"},
-		{Name: "to", Type: "address"},
-		{Name: "value", Type: "uint256"},
-		{Name: "data", Type: "bytes"},
-	})
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	// Create an Arguments object representing the tuple in the correct order
-	args := abi.Arguments{
-		{
-			Type: bytes32Type,
-		},
-		{
-			Type: tupleType,
-		},
-	}
-
-	// Pack the data using abi.Pack
-	packed, err := args.Pack(
-		MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP,
-		op,
-	)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	return crypto.Keccak256Hash(packed), nil
+	return crypto.Keccak256Hash(encoded), nil
 }
