@@ -54,7 +54,7 @@ func signPlainKey(privateKeyHex string) {
 	}
 
 	// Add signature to proposal
-	proposal.AddSignature(unmarshalledSig)
+	proposal.Signatures = append(proposal.Signatures, unmarshalledSig)
 
 	// Write proposal to file
 	WriteProposalToFile(proposal, os.Args[0])

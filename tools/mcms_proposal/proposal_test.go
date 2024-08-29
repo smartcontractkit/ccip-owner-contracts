@@ -75,43 +75,6 @@ func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
 	assert.Equal(t, err.Error(), "invalid version: ")
 }
 
-func TestMCMSOnlyProposal_AddSignature(t *testing.T) {
-	proposal := Proposal{
-		Version:    "1.0.0",
-		ValidUntil: 2004259681,
-		Signatures: []Signature{},
-		ChainMetadata: map[string]ChainMetadata{
-			TestChain: {
-				NonceOffset: 1,
-				MCMAddress:  TestAddress,
-			},
-		},
-		Description: "Sample description",
-		Transactions: []ChainOperation{
-			ChainOperation{
-				ChainIdentifier: TestChain,
-				Operation: Operation{
-					To:           TestAddress,
-					Value:        0,
-					Data:         "0x",
-					ContractType: "Sample contract",
-					Tags:         []string{"tag1", "tag2"},
-				},
-			},
-		},
-	}
-
-	sig := Signature{
-		R: common.HexToHash("0x1234567890abcdef"),
-		S: common.HexToHash("0x1234567890abcdef"),
-		V: 27,
-	}
-
-	proposal.AddSignature(sig)
-	assert.Len(t, proposal.Signatures, 1)
-	assert.Equal(t, proposal.Signatures[0], sig)
-}
-
 func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
 	proposal := &Proposal{
 		Version:              "1.0",

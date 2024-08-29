@@ -76,10 +76,6 @@ func (m *Proposal) Validate() error {
 	return nil
 }
 
-func (m *Proposal) AddSignature(sig Signature) {
-	m.Signatures = append(m.Signatures, sig)
-}
-
 func (m *Proposal) ToExecutor(clients map[string]ContractDeployBackend) (*Executor, error) {
 	// Create a new executor
 	executor, err := NewProposalExecutor(m, clients)
