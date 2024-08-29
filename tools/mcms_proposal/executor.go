@@ -1,4 +1,4 @@
-package executable
+package mcms_proposal
 
 import (
 	"encoding/binary"
@@ -12,18 +12,19 @@ import (
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/configwrappers"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/merkle"
 )
 
 type Executor struct {
-	Proposal         *ExecutableMCMSProposal
-	Tree             *MerkleTree
+	Proposal         *Proposal
+	Tree             *merkle.MerkleTree
 	RootMetadatas    map[string]gethwrappers.ManyChainMultiSigRootMetadata
 	Operations       map[string][]gethwrappers.ManyChainMultiSigOp
 	ChainAgnosticOps []gethwrappers.ManyChainMultiSigOp
 	Callers          map[string]*gethwrappers.ManyChainMultiSig
 }
 
-func NewProposalExecutor(proposal *ExecutableMCMSProposal, clients map[string]ContractDeployBackend) (*Executor, error) {
+func NewProposalExecutor(proposal *Proposal, clients map[string]ContractDeployBackend) (*Executor, error) {
 	txCounts := calculateTransactionCounts(proposal.Transactions)
 	mcms := mapMCMAddresses(proposal.ChainMetadata)
 

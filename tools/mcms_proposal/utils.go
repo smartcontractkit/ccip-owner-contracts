@@ -1,4 +1,4 @@
-package executable
+package mcms_proposal
 
 import (
 	"fmt"
@@ -16,18 +16,7 @@ type ContractDeployBackend interface {
 	bind.DeployBackend
 }
 
-type Operation struct {
-	To    common.Address
-	Data  string
-	Value uint64
-}
-
-type ChainOperation struct {
-	ChainIdentifier string
-	Operation
-}
-
-func mapMCMAddresses(metadatas map[string]ExecutableMCMSChainMetadata) map[string]common.Address {
+func mapMCMAddresses(metadatas map[string]ChainMetadata) map[string]common.Address {
 	m := make(map[string]common.Address)
 	for k, v := range metadatas {
 		m[k] = v.MCMAddress

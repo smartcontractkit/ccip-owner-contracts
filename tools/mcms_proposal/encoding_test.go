@@ -1,4 +1,4 @@
-package executable
+package mcms_proposal
 
 import (
 	"math/big"
@@ -27,7 +27,7 @@ func TestCalculateTransactionCounts(t *testing.T) {
 }
 
 func TestBuildRootMetadatas_Success(t *testing.T) {
-	chainMetadata := map[string]ExecutableMCMSChainMetadata{
+	chainMetadata := map[string]ChainMetadata{
 		"1": {MCMAddress: common.HexToAddress("0x1"), NonceOffset: 0},
 		"2": {MCMAddress: common.HexToAddress("0x2"), NonceOffset: 1},
 	}
@@ -63,7 +63,7 @@ func TestBuildRootMetadatas_Success(t *testing.T) {
 }
 
 func TestBuildRootMetadatas_InvalidChainID(t *testing.T) {
-	chainMetadata := map[string]ExecutableMCMSChainMetadata{
+	chainMetadata := map[string]ChainMetadata{
 		"invalid": {MCMAddress: common.HexToAddress("0x1"), NonceOffset: 0},
 	}
 	txCounts := map[string]uint64{
@@ -81,15 +81,21 @@ func TestBuildRootMetadatas_InvalidChainID(t *testing.T) {
 
 func TestBuildOperations(t *testing.T) {
 	transactions := []ChainOperation{
-		{ChainIdentifier: "1", Operation: Operation{
-			To: common.HexToAddress("0x1"), Data: "0x", Value: 1,
-		}},
-		{ChainIdentifier: "1", Operation: Operation{
-			To: common.HexToAddress("0x2"), Data: "0x", Value: 2,
-		}},
-		{ChainIdentifier: "2", Operation: Operation{
-			To: common.HexToAddress("0x3"), Data: "0x", Value: 3,
-		}},
+		{ChainIdentifier: "1",
+			Operation: Operation{
+				To: common.HexToAddress("0x1"), Data: "0x", Value: 1,
+			},
+		},
+		{ChainIdentifier: "1",
+			Operation: Operation{
+				To: common.HexToAddress("0x2"), Data: "0x", Value: 2,
+			},
+		},
+		{ChainIdentifier: "2",
+			Operation: Operation{
+				To: common.HexToAddress("0x3"), Data: "0x", Value: 3,
+			},
+		},
 	}
 	rootMetadatas := map[string]gethwrappers.ManyChainMultiSigRootMetadata{
 		"1": {
@@ -144,7 +150,7 @@ func TestBuildOperations(t *testing.T) {
 }
 
 func TestSortedChainIdentifiers(t *testing.T) {
-	chainMetadata := map[string]ExecutableMCMSChainMetadata{
+	chainMetadata := map[string]ChainMetadata{
 		"2": {},
 		"1": {},
 		"3": {},

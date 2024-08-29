@@ -1,4 +1,4 @@
-package executable
+package mcms_proposal
 
 import (
 	"testing"

@@ -1,4 +1,4 @@
-package executable
+package mcms_proposal
 
 import (
 	"math/big"
@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/merkle"
 )
 
 var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP"))
@@ -22,7 +23,7 @@ func calculateTransactionCounts(transactions []ChainOperation) map[string]uint64
 }
 
 func buildRootMetadatas(
-	chainMetadata map[string]ExecutableMCMSChainMetadata,
+	chainMetadata map[string]ChainMetadata,
 	txCounts map[string]uint64,
 	currentOpCounts map[string]big.Int,
 	overridePreviousRoot bool,
@@ -97,7 +98,7 @@ func buildOperations(
 	return ops, chainAgnosticOps
 }
 
-func sortedChainIdentifiers(chainMetadata map[string]ExecutableMCMSChainMetadata) []string {
+func sortedChainIdentifiers(chainMetadata map[string]ChainMetadata) []string {
 	chainIdentifiers := make([]string, 0, len(chainMetadata))
 	for chainID := range chainMetadata {
 		chainIdentifiers = append(chainIdentifiers, chainID)
@@ -110,7 +111,7 @@ func buildMerkleTree(
 	chainIdentifiers []string,
 	rootMetadatas map[string]gethwrappers.ManyChainMultiSigRootMetadata,
 	ops map[string][]gethwrappers.ManyChainMultiSigOp,
-) (*MerkleTree, error) {
+) (*merkle.MerkleTree, error) {
 	hashLeaves := make([]common.Hash, 0)
 
 	for _, chainID := range chainIdentifiers {
@@ -134,7 +135,7 @@ func buildMerkleTree(
 		return hashLeaves[i].String() < hashLeaves[j].String()
 	})
 
-	return NewMerkleTree(hashLeaves), nil
+	return merkle.NewMerkleTree(hashLeaves), nil
 }
 
 func metadataEncoder(rootMetadata gethwrappers.ManyChainMultiSigRootMetadata) (common.Hash, error) {

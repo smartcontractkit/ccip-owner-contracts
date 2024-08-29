@@ -1,4 +1,4 @@
-package executable
+package mcms_proposal
 
 import (
 	"crypto/ecdsa"
@@ -145,19 +145,19 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	assert.NoError(t, err)
 
 	// Construct a proposal
-	proposal := ExecutableMCMSProposal{
+	proposal := Proposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ExecutableMCMSChainMetadata{
+		ChainMetadata: map[string]ChainMetadata{
 			"1337": {
 				NonceOffset: 0,
 				MCMAddress:  mcms.Address(),
 			},
 		},
 		Transactions: []ChainOperation{
-			{
+			ChainOperation{
 				ChainIdentifier: "1337",
 				Operation: Operation{
 					To:    timelock.Address(),
@@ -266,12 +266,12 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	assert.NoError(t, err)
 
 	// Construct a proposal
-	proposal := ExecutableMCMSProposal{
+	proposal := Proposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ExecutableMCMSChainMetadata{
+		ChainMetadata: map[string]ChainMetadata{
 			"1337": {
 				NonceOffset: 0,
 				MCMAddress:  mcms.Address(),
@@ -405,12 +405,12 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	}
 
 	// Construct a proposal
-	proposal := ExecutableMCMSProposal{
+	proposal := Proposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ExecutableMCMSChainMetadata{
+		ChainMetadata: map[string]ChainMetadata{
 			"1337": {
 				NonceOffset: 0,
 				MCMAddress:  mcms.Address(),
@@ -540,12 +540,12 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 
 	// Construct a proposal
-	proposal := ExecutableMCMSProposal{
+	proposal := Proposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ExecutableMCMSChainMetadata{
+		ChainMetadata: map[string]ChainMetadata{
 			"1337": {
 				NonceOffset: 0,
 				MCMAddress:  mcms.Address(),
@@ -677,12 +677,12 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	}
 
 	// Construct a proposal
-	proposal := ExecutableMCMSProposal{
+	proposal := Proposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ExecutableMCMSChainMetadata{
+		ChainMetadata: map[string]ChainMetadata{
 			"1337": {
 				NonceOffset: 0,
 				MCMAddress:  mcms.Address(),
@@ -778,12 +778,12 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	}
 
 	// Construct a proposal
-	proposal := ExecutableMCMSProposal{
+	proposal := Proposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ExecutableMCMSChainMetadata{
+		ChainMetadata: map[string]ChainMetadata{
 			"1337": {
 				NonceOffset: 0,
 				MCMAddress:  mcms.Address(),

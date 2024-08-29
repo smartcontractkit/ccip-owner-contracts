@@ -1,16 +1,28 @@
-package managed
+package mcms_proposal
 
 import (
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/executable"
 )
 
-// BaseMCMSProposal is the base struct for all MCMS proposals
-// Note: this type should never be utilized directly which is why it is private
-type baseMCMSProposal struct {
-	executable.ExecutableMCMSProposal
+type ChainMetadata struct {
+	NonceOffset uint64         `json:"nonceOffset"`
+	MCMAddress  common.Address `json:"mcmAddress"`
+}
+
+// Proposal is a struct where the target contract is an MCMS contract
+// with no forwarder contracts. This type does not support any type of atomic contract
+// call batching, as the MCMS contract natively doesn't support batching
+type Proposal struct {
+	Version              string      `json:"version"`
+	ValidUntil           uint32      `json:"validUntil"`
+	Signatures           []Signature `json:"signatures"`
+	OverridePreviousRoot bool        `json:"overridePreviousRoot"`
+
+	// Map of chain identifier to chain metadata
+	ChainMetadata map[string]ChainMetadata `json:"chainMetadata"`
 
 	// This is intended to be displayed as-is to signers, to give them
 	// context for the change. File authors should templatize strings for
@@ -21,7 +33,7 @@ type baseMCMSProposal struct {
 	Transactions []ChainOperation `json:"transactions"`
 }
 
-func (m *baseMCMSProposal) Validate() error {
+func (m *Proposal) Validate() error {
 	if m.Version == "" {
 		return &errors.ErrInvalidVersion{
 			ReceivedVersion: m.Version,
@@ -54,9 +66,9 @@ func (m *baseMCMSProposal) Validate() error {
 
 	// Validate all chains in transactions have an entry in chain metadata
 	for _, t := range m.Transactions {
-		if _, ok := m.ChainMetadata[t.GetChainIdentifier()]; !ok {
+		if _, ok := m.ChainMetadata[t.ChainIdentifier]; !ok {
 			return &errors.ErrMissingChainDetails{
-				ChainIdentifier: t.GetChainIdentifier(),
+				ChainIdentifier: t.ChainIdentifier,
 				Parameter:       "chain metadata",
 			}
 		}
@@ -64,26 +76,16 @@ func (m *baseMCMSProposal) Validate() error {
 	return nil
 }
 
-func (m *baseMCMSProposal) AddSignature(sig executable.Signature) {
+func (m *Proposal) AddSignature(sig Signature) {
 	m.Signatures = append(m.Signatures, sig)
 }
 
-func (m *baseMCMSProposal) ToExecutableMCMSProposal() executable.ExecutableMCMSProposal {
-	raw := executable.ExecutableMCMSProposal{
-		Version:              m.Version,
-		ValidUntil:           m.ValidUntil,
-		Signatures:           m.Signatures,
-		OverridePreviousRoot: m.OverridePreviousRoot,
-		Transactions:         make([]executable.ChainOperation, 0),
-		ChainMetadata:        make(map[string]executable.ExecutableMCMSChainMetadata),
+func (m *Proposal) ToExecutor(clients map[string]ContractDeployBackend) (*Executor, error) {
+	// Create a new executor
+	executor, err := NewProposalExecutor(m, clients)
+	if err != nil {
+		return nil, err
 	}
 
-	for k, v := range m.ChainMetadata {
-		raw.ChainMetadata[k] = executable.ExecutableMCMSChainMetadata{
-			NonceOffset: v.NonceOffset,
-			MCMAddress:  v.MCMAddress,
-		}
-	}
-
-	return raw
+	return executor, nil
 }
