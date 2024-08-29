@@ -98,7 +98,7 @@ func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcms_proposal.Proposal,
 			tags = append(tags, op.Tags...)
 		}
 		predecessor := predecessorMap[t.ChainIdentifier]
-		salt := [32]byte(common.FromHex(ZERO_HASH))
+		salt := ZERO_HASH
 		delay, _ := time.ParseDuration(m.MinDelay)
 
 		abi, err := owner.RBACTimelockMetaData.GetAbi()
