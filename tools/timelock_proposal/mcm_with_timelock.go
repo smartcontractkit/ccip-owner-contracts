@@ -12,9 +12,7 @@ import (
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/mcms_proposal"
 )
 
-const (
-	ZERO_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000"
-)
+var ZERO_HASH = common.BytesToHash([]byte{})
 
 type MCMSWithTimelockChainMetadata struct {
 	mcms_proposal.ChainMetadata
@@ -73,9 +71,9 @@ func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcms_proposal.Proposal,
 	mcmOnly := m.Proposal
 
 	// Start predecessor map with all chains pointing to the zero hash
-	predecessorMap := make(map[string][32]byte)
+	predecessorMap := make(map[string]common.Hash)
 	for chain := range m.ChainMetadata {
-		predecessorMap[chain] = [32]byte(common.FromHex(ZERO_HASH))
+		predecessorMap[chain] = ZERO_HASH
 	}
 
 	// Convert chain metadata
