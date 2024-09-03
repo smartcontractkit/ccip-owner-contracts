@@ -9,18 +9,18 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient/simulated"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/configwrappers"
 	owner_errors "github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 	"github.com/stretchr/testify/assert"
 )
 
-func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*bind.TransactOpts, *simulated.Backend, *gethwrappers.ManyChainMultiSig, error) {
+func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*bind.TransactOpts, *backends.SimulatedBackend, *gethwrappers.ManyChainMultiSig, error) {
 	// Generate a private key
 	keys := make([]*ecdsa.PrivateKey, numSigners)
 	auths := make([]*bind.TransactOpts, numSigners)
@@ -41,10 +41,10 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 		genesisAlloc[auth.From] = core.GenesisAccount{Balance: big.NewInt(1e18)}
 	}
 	blockGasLimit := uint64(8000000)
-	sim := simulated.New(genesisAlloc, blockGasLimit)
+	sim := backends.NewSimulatedBackend(genesisAlloc, blockGasLimit)
 
 	// Deploy a ManyChainMultiSig contract with any of the signers
-	_, tx, mcms, err := gethwrappers.DeployManyChainMultiSig(auths[0], sim.Client())
+	_, tx, mcms, err := gethwrappers.DeployManyChainMultiSig(auths[0], sim)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -53,7 +53,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	sim.Commit()
 
 	// Wait for the contract to be mined
-	receipt, err := bind.WaitMined(auths[0].Context, sim.Client(), tx)
+	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -86,7 +86,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	sim.Commit()
 
 	// Wait for the transaction to be mined
-	receipt, err = bind.WaitMined(auths[0].Context, sim.Client(), tx)
+	receipt, err = bind.WaitMined(auths[0].Context, sim, tx)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -95,7 +95,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	if receipt.Status != types.ReceiptStatusSuccessful {
 		// Use CallContract to get the revert reason
 		//
-		data, err := sim.Client().CallContract(auths[0].Context, ethereum.CallMsg{
+		data, err := sim.CallContract(auths[0].Context, ethereum.CallMsg{
 			From:  auths[0].From,
 			To:    tx.To(),
 			Data:  tx.Data(),
@@ -122,7 +122,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	// Deploy a timelock contract for testing
 	addr, tx, timelock, err := gethwrappers.DeployRBACTimelock(
 		auths[0],
-		sim.Client(),
+		sim,
 		big.NewInt(0),
 		mcms.Address(),
 		[]common.Address{},
@@ -169,7 +169,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim.Client()})
+	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -210,7 +210,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	sim.Commit()
 
 	// Wait for the transaction to be mined
-	receipt, err := bind.WaitMined(auths[0].Context, sim.Client(), tx)
+	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
 	assert.NoError(t, err)
 	assert.NotNil(t, receipt)
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
@@ -243,7 +243,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	// Deploy a timelock contract for testing
 	addr, tx, timelock, err := gethwrappers.DeployRBACTimelock(
 		auths[0],
-		sim.Client(),
+		sim,
 		big.NewInt(0),
 		mcms.Address(),
 		[]common.Address{},
@@ -290,7 +290,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim.Client()})
+	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -333,7 +333,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	sim.Commit()
 
 	// Wait for the transaction to be mined
-	receipt, err := bind.WaitMined(auths[0].Context, sim.Client(), tx)
+	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
 	assert.NoError(t, err)
 	assert.NotNil(t, receipt)
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
@@ -364,7 +364,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	// Deploy a timelock contract for testing
 	addr, tx, timelock, err := gethwrappers.DeployRBACTimelock(
 		auths[0],
-		sim.Client(),
+		sim,
 		big.NewInt(0),
 		mcms.Address(),
 		[]common.Address{},
@@ -420,7 +420,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim.Client()})
+	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -463,7 +463,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		sim.Commit()
 
 		// Wait for the transaction to be mined
-		receipt, err := bind.WaitMined(auths[0].Context, sim.Client(), tx)
+		receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
 		assert.NoError(t, err)
 		assert.NotNil(t, receipt)
 		assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
@@ -499,7 +499,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	// Deploy a timelock contract for testing
 	addr, tx, timelock, err := gethwrappers.DeployRBACTimelock(
 		auths[0],
-		sim.Client(),
+		sim,
 		big.NewInt(0),
 		mcms.Address(),
 		[]common.Address{},
@@ -555,7 +555,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim.Client()})
+	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -600,7 +600,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		sim.Commit()
 
 		// Wait for the transaction to be mined
-		receipt, err := bind.WaitMined(auths[0].Context, sim.Client(), tx)
+		receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
 		assert.NoError(t, err)
 		assert.NotNil(t, receipt)
 		assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
@@ -636,7 +636,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	// Deploy a timelock contract for testing
 	addr, tx, timelock, err := gethwrappers.DeployRBACTimelock(
 		auths[0],
-		sim.Client(),
+		sim,
 		big.NewInt(0),
 		mcms.Address(),
 		[]common.Address{},
@@ -692,7 +692,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim.Client()})
+	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -737,7 +737,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	// Deploy a timelock contract for testing
 	addr, tx, timelock, err := gethwrappers.DeployRBACTimelock(
 		auths[0],
-		sim.Client(),
+		sim,
 		big.NewInt(0),
 		mcms.Address(),
 		[]common.Address{},
@@ -793,7 +793,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim.Client()})
+	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
