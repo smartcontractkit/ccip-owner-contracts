@@ -14,19 +14,19 @@ var TestChain2 = ChainIdentifier(16015286601757825753)
 var TestChain3 = ChainIdentifier(10344971235874465080)
 
 func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
-	proposal := &Proposal{
-		Version:              "1.0",
-		ValidUntil:           2004259681,
-		Signatures:           []Signature{},
-		OverridePreviousRoot: false,
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+	proposal, err := NewProposal(
+		"1.0",
+		2004259681,
+		[]Signature{},
+		false,
+		map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				NonceOffset: 1,
 				MCMAddress:  TestAddress,
 			},
 		},
-		Description: "Sample description",
-		Transactions: []ChainOperation{
+		"Sample description",
+		[]ChainOperation{
 			{
 				ChainIdentifier: TestChain1,
 				Operation: Operation{
@@ -38,27 +38,26 @@ func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 				},
 			},
 		},
-	}
-
-	err := proposal.Validate()
+	)
 
 	assert.NoError(t, err)
+	assert.NotNil(t, proposal)
 }
 
 func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
-	proposal := &Proposal{
-		Version:              "",
-		ValidUntil:           2004259681,
-		Signatures:           []Signature{},
-		OverridePreviousRoot: false,
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+	proposal, err := NewProposal(
+		"",
+		2004259681,
+		[]Signature{},
+		false,
+		map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				NonceOffset: 1,
 				MCMAddress:  TestAddress,
 			},
 		},
-		Description: "Sample description",
-		Transactions: []ChainOperation{
+		"Sample description",
+		[]ChainOperation{
 			{
 				ChainIdentifier: TestChain1,
 				Operation: Operation{
@@ -70,28 +69,27 @@ func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
 				},
 			},
 		},
-	}
-
-	err := proposal.Validate()
+	)
 
 	assert.Error(t, err)
 	assert.Equal(t, err.Error(), "invalid version: ")
+	assert.Nil(t, proposal)
 }
 
 func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
-	proposal := &Proposal{
-		Version:              "1.0",
-		ValidUntil:           0,
-		Signatures:           []Signature{},
-		OverridePreviousRoot: false,
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+	proposal, err := NewProposal(
+		"1.0",
+		0,
+		[]Signature{},
+		false,
+		map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				NonceOffset: 1,
 				MCMAddress:  TestAddress,
 			},
 		},
-		Description: "Sample description",
-		Transactions: []ChainOperation{
+		"Sample description",
+		[]ChainOperation{
 			{
 				ChainIdentifier: TestChain1,
 				Operation: Operation{
@@ -103,23 +101,22 @@ func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
 				},
 			},
 		},
-	}
-
-	err := proposal.Validate()
+	)
 
 	assert.Error(t, err)
 	assert.Equal(t, err.Error(), "invalid valid until: 0")
+	assert.Nil(t, proposal)
 }
 
 func TestMCMSOnlyProposal_Validate_InvalidChainMetadata(t *testing.T) {
-	proposal := &Proposal{
-		Version:              "1.0",
-		ValidUntil:           2004259681,
-		Signatures:           []Signature{},
-		OverridePreviousRoot: false,
-		ChainMetadata:        map[ChainIdentifier]ChainMetadata{},
-		Description:          "Sample description",
-		Transactions: []ChainOperation{
+	proposal, err := NewProposal(
+		"1.0",
+		2004259681,
+		[]Signature{},
+		false,
+		map[ChainIdentifier]ChainMetadata{},
+		"Sample description",
+		[]ChainOperation{
 			{
 				ChainIdentifier: TestChain1,
 				Operation: Operation{
@@ -131,28 +128,27 @@ func TestMCMSOnlyProposal_Validate_InvalidChainMetadata(t *testing.T) {
 				},
 			},
 		},
-	}
-
-	err := proposal.Validate()
+	)
 
 	assert.Error(t, err)
 	assert.Equal(t, err.Error(), "no chain metadata")
+	assert.Nil(t, proposal)
 }
 
 func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
-	proposal := &Proposal{
-		Version:              "1.0",
-		ValidUntil:           2004259681,
-		Signatures:           []Signature{},
-		OverridePreviousRoot: false,
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+	proposal, err := NewProposal(
+		"1.0",
+		2004259681,
+		[]Signature{},
+		false,
+		map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				NonceOffset: 1,
 				MCMAddress:  TestAddress,
 			},
 		},
-		Description: "",
-		Transactions: []ChainOperation{
+		"",
+		[]ChainOperation{
 			{
 				ChainIdentifier: TestChain1,
 				Operation: Operation{
@@ -164,50 +160,48 @@ func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
 				},
 			},
 		},
-	}
-
-	err := proposal.Validate()
+	)
 
 	assert.Error(t, err)
 	assert.Equal(t, err.Error(), "invalid description: ")
+	assert.Nil(t, proposal)
 }
 
 func TestMCMSOnlyProposal_Validate_NoTransactions(t *testing.T) {
-	proposal := &Proposal{
-		Version:              "1.0",
-		ValidUntil:           2004259681,
-		Signatures:           []Signature{},
-		OverridePreviousRoot: false,
-		Description:          "Sample description",
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+	proposal, err := NewProposal(
+		"1.0",
+		2004259681,
+		[]Signature{},
+		false,
+		map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				NonceOffset: 1,
 				MCMAddress:  TestAddress,
 			},
 		},
-		Transactions: []ChainOperation{},
-	}
-
-	err := proposal.Validate()
+		"Sample description",
+		[]ChainOperation{},
+	)
 
 	assert.Error(t, err)
 	assert.Equal(t, err.Error(), "no transactions")
+	assert.Nil(t, proposal)
 }
 
 func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing.T) {
-	proposal := &Proposal{
-		Version:              "1.0",
-		ValidUntil:           2004259681,
-		Signatures:           []Signature{},
-		OverridePreviousRoot: false,
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+	proposal, err := NewProposal(
+		"1.0",
+		2004259681,
+		[]Signature{},
+		false,
+		map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				NonceOffset: 1,
 				MCMAddress:  TestAddress,
 			},
 		},
-		Description: "Sample description",
-		Transactions: []ChainOperation{
+		"Sample description",
+		[]ChainOperation{
 			{
 				ChainIdentifier: 3,
 				Operation: Operation{
@@ -219,10 +213,9 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 				},
 			},
 		},
-	}
-
-	err := proposal.Validate()
+	)
 
 	assert.Error(t, err)
 	assert.Equal(t, err.Error(), "missing chain metadata for chain 3")
+	assert.Nil(t, proposal)
 }

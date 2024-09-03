@@ -33,6 +33,33 @@ type Proposal struct {
 	Transactions []ChainOperation `json:"transactions"`
 }
 
+func NewProposal(
+	version string,
+	validUntil uint32,
+	signatures []Signature,
+	overridePreviousRoot bool,
+	chainMetadata map[ChainIdentifier]ChainMetadata,
+	description string,
+	transactions []ChainOperation,
+) (*Proposal, error) {
+	proposal := Proposal{
+		Version:              version,
+		ValidUntil:           validUntil,
+		Signatures:           signatures,
+		OverridePreviousRoot: overridePreviousRoot,
+		ChainMetadata:        chainMetadata,
+		Description:          description,
+		Transactions:         transactions,
+	}
+
+	err := proposal.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	return &proposal, nil
+}
+
 func (m *Proposal) Validate() error {
 	if m.Version == "" {
 		return &errors.ErrInvalidVersion{

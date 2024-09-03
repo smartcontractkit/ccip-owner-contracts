@@ -26,7 +26,7 @@ type Executor struct {
 
 func NewProposalExecutor(proposal *Proposal, clients map[ChainIdentifier]ContractDeployBackend) (*Executor, error) {
 	txCounts := calculateTransactionCounts(proposal.Transactions)
-	mcms := mapMCMAddresses(proposal.ChainMetadata)
+	mcms := transformMCMAddresses(proposal.ChainMetadata)
 
 	mcmsWrappers := make(map[ChainIdentifier]*gethwrappers.ManyChainMultiSig)
 	for chain, mcmAddress := range mcms {
@@ -254,8 +254,8 @@ func (e *Executor) SetRootOnChain(auth *bind.TransactOpts, chain ChainIdentifier
 		auth,
 		[32]byte(e.Tree.Root.Bytes()),
 		e.Proposal.ValidUntil, metadata,
-		mapHashes(proof),
-		mapSignatures(sortedSignatures),
+		transformHashes(proof),
+		transformSignatures(sortedSignatures),
 	)
 }
 
@@ -277,6 +277,6 @@ func (e *Executor) ExecuteOnChain(auth *bind.TransactOpts, idx int) (*types.Tran
 	return e.Callers[chain].Execute(
 		auth,
 		mcmOperation,
-		mapHashes(proof),
+		transformHashes(proof),
 	)
 }
