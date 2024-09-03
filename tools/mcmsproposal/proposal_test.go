@@ -9,7 +9,9 @@ import (
 )
 
 var TestAddress = common.HexToAddress("0x1234567890abcdef")
-var TestChain = "chain1"
+var TestChain1 = ChainIdentifier(3379446385462418246)
+var TestChain2 = ChainIdentifier(16015286601757825753)
+var TestChain3 = ChainIdentifier(10344971235874465080)
 
 func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 	proposal := &Proposal{
@@ -17,8 +19,8 @@ func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ChainMetadata{
-			TestChain: {
+		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+			TestChain1: {
 				NonceOffset: 1,
 				MCMAddress:  TestAddress,
 			},
@@ -26,7 +28,7 @@ func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 		Description: "Sample description",
 		Transactions: []ChainOperation{
 			{
-				ChainIdentifier: TestChain,
+				ChainIdentifier: TestChain1,
 				Operation: Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
@@ -49,8 +51,8 @@ func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ChainMetadata{
-			TestChain: {
+		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+			TestChain1: {
 				NonceOffset: 1,
 				MCMAddress:  TestAddress,
 			},
@@ -58,7 +60,7 @@ func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
 		Description: "Sample description",
 		Transactions: []ChainOperation{
 			{
-				ChainIdentifier: TestChain,
+				ChainIdentifier: TestChain1,
 				Operation: Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
@@ -82,8 +84,8 @@ func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
 		ValidUntil:           0,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ChainMetadata{
-			TestChain: {
+		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+			TestChain1: {
 				NonceOffset: 1,
 				MCMAddress:  TestAddress,
 			},
@@ -91,7 +93,7 @@ func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
 		Description: "Sample description",
 		Transactions: []ChainOperation{
 			{
-				ChainIdentifier: TestChain,
+				ChainIdentifier: TestChain1,
 				Operation: Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
@@ -115,11 +117,11 @@ func TestMCMSOnlyProposal_Validate_InvalidChainMetadata(t *testing.T) {
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata:        map[string]ChainMetadata{},
+		ChainMetadata:        map[ChainIdentifier]ChainMetadata{},
 		Description:          "Sample description",
 		Transactions: []ChainOperation{
 			{
-				ChainIdentifier: TestChain,
+				ChainIdentifier: TestChain1,
 				Operation: Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
@@ -143,8 +145,8 @@ func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ChainMetadata{
-			TestChain: {
+		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+			TestChain1: {
 				NonceOffset: 1,
 				MCMAddress:  TestAddress,
 			},
@@ -152,7 +154,7 @@ func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
 		Description: "",
 		Transactions: []ChainOperation{
 			{
-				ChainIdentifier: TestChain,
+				ChainIdentifier: TestChain1,
 				Operation: Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
@@ -177,8 +179,8 @@ func TestMCMSOnlyProposal_Validate_NoTransactions(t *testing.T) {
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
 		Description:          "Sample description",
-		ChainMetadata: map[string]ChainMetadata{
-			TestChain: {
+		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+			TestChain1: {
 				NonceOffset: 1,
 				MCMAddress:  TestAddress,
 			},
@@ -198,8 +200,8 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ChainMetadata{
-			TestChain: {
+		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+			TestChain1: {
 				NonceOffset: 1,
 				MCMAddress:  TestAddress,
 			},
@@ -207,7 +209,7 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 		Description: "Sample description",
 		Transactions: []ChainOperation{
 			{
-				ChainIdentifier: "chain2",
+				ChainIdentifier: 3,
 				Operation: Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
@@ -222,5 +224,5 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 	err := proposal.Validate()
 
 	assert.Error(t, err)
-	assert.Equal(t, err.Error(), "missing chain metadata for chain chain2")
+	assert.Equal(t, err.Error(), "missing chain metadata for chain 3")
 }

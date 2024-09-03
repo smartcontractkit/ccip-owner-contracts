@@ -8,12 +8,12 @@ import (
 
 // ErrInvalidChainID is the error for an invalid chain ID.
 type ErrInvalidChainID struct {
-	ReceivedChainID string
+	ReceivedChainID uint64
 }
 
 // Error returns the error message.
 func (e *ErrInvalidChainID) Error() string {
-	return fmt.Sprintf("invalid chain ID: %s", e.ReceivedChainID)
+	return fmt.Sprintf("invalid chain ID: %v", e.ReceivedChainID)
 }
 
 type ErrInvalidDescription struct {
@@ -72,22 +72,22 @@ func (e *ErrInvalidVersion) Error() string {
 // ErrMissingChainDetails is the error for missing chain metadata.
 type ErrMissingChainDetails struct {
 	Parameter       string
-	ChainIdentifier string
+	ChainIdentifier uint64
 }
 
 // Error returns the error message.
 func (e *ErrMissingChainDetails) Error() string {
-	return fmt.Sprintf("missing %s for chain %s", e.Parameter, e.ChainIdentifier)
+	return fmt.Sprintf("missing %s for chain %v", e.Parameter, e.ChainIdentifier)
 }
 
 // ErrMissingChainClient is the error for missing chain client.
 type ErrMissingChainClient struct {
-	ChainIdentifier string
+	ChainIdentifier uint64
 }
 
 // Error returns the error message.
 func (e *ErrMissingChainClient) Error() string {
-	return fmt.Sprintf("missing chain client for chain %s", e.ChainIdentifier)
+	return fmt.Sprintf("missing chain client for chain %v", e.ChainIdentifier)
 }
 
 type ErrNoChainMetadata struct {
@@ -105,13 +105,13 @@ func (e *ErrNoTransactions) Error() string {
 }
 
 type ErrInvalidSignature struct {
-	ChainIdentifier  string
+	ChainIdentifier  uint64
 	MCMSAddress      common.Address
 	RecoveredAddress common.Address
 }
 
 func (e *ErrInvalidSignature) Error() string {
-	return fmt.Sprintf("invalid signature: received signature for address %s is not a signer on MCMS %s on chain %s", e.RecoveredAddress, e.MCMSAddress, e.ChainIdentifier)
+	return fmt.Sprintf("invalid signature: received signature for address %s is not a signer on MCMS %s on chain %v", e.RecoveredAddress, e.MCMSAddress, e.ChainIdentifier)
 }
 
 type ErrInvalidMCMSConfig struct {
@@ -123,18 +123,18 @@ func (e *ErrInvalidMCMSConfig) Error() string {
 }
 
 type ErrQuorumNotMet struct {
-	ChainIdentifier string
+	ChainIdentifier uint64
 }
 
 func (e *ErrQuorumNotMet) Error() string {
-	return fmt.Sprintf("quorum not met for chain %s", e.ChainIdentifier)
+	return fmt.Sprintf("quorum not met for chain %v", e.ChainIdentifier)
 }
 
 type ErrInconsistentConfigs struct {
-	ChainIdentifierA string
-	ChainIdentifierB string
+	ChainIdentifierA uint64
+	ChainIdentifierB uint64
 }
 
 func (e *ErrInconsistentConfigs) Error() string {
-	return fmt.Sprintf("inconsistent configs for chains %s and %s", e.ChainIdentifierA, e.ChainIdentifierB)
+	return fmt.Sprintf("inconsistent configs for chains %v and %v", e.ChainIdentifierA, e.ChainIdentifierB)
 }

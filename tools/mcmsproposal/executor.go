@@ -18,22 +18,22 @@ import (
 type Executor struct {
 	Proposal         *Proposal
 	Tree             *merkle.MerkleTree
-	RootMetadatas    map[string]gethwrappers.ManyChainMultiSigRootMetadata
-	Operations       map[string][]gethwrappers.ManyChainMultiSigOp
+	RootMetadatas    map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata
+	Operations       map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp
 	ChainAgnosticOps []gethwrappers.ManyChainMultiSigOp
-	Callers          map[string]*gethwrappers.ManyChainMultiSig
+	Callers          map[ChainIdentifier]*gethwrappers.ManyChainMultiSig
 }
 
-func NewProposalExecutor(proposal *Proposal, clients map[string]ContractDeployBackend) (*Executor, error) {
+func NewProposalExecutor(proposal *Proposal, clients map[ChainIdentifier]ContractDeployBackend) (*Executor, error) {
 	txCounts := calculateTransactionCounts(proposal.Transactions)
 	mcms := mapMCMAddresses(proposal.ChainMetadata)
 
-	mcmsWrappers := make(map[string]*gethwrappers.ManyChainMultiSig)
+	mcmsWrappers := make(map[ChainIdentifier]*gethwrappers.ManyChainMultiSig)
 	for chain, mcmAddress := range mcms {
 		client, ok := clients[chain]
 		if !ok {
 			return nil, &errors.ErrMissingChainClient{
-				ChainIdentifier: chain,
+				ChainIdentifier: uint64(chain),
 			}
 		}
 
@@ -107,8 +107,8 @@ func (e *Executor) ValidateMCMSConfigs() error {
 
 		if !wrappedConfigs[chain].Equals(wrappedConfigs[sortedChains[i-1]]) {
 			return &errors.ErrInconsistentConfigs{
-				ChainIdentifierA: chain,
-				ChainIdentifierB: sortedChains[i-1],
+				ChainIdentifierA: uint64(chain),
+				ChainIdentifierB: uint64(sortedChains[i-1]),
 			}
 		}
 	}
@@ -116,8 +116,8 @@ func (e *Executor) ValidateMCMSConfigs() error {
 	return nil
 }
 
-func (m *Executor) GetCurrentOpCounts() (map[string]big.Int, error) {
-	opCounts := make(map[string]big.Int)
+func (m *Executor) GetCurrentOpCounts() (map[ChainIdentifier]big.Int, error) {
+	opCounts := make(map[ChainIdentifier]big.Int)
 
 	for chain, wrapper := range m.Callers {
 		opCount, err := wrapper.GetOpCount(&bind.CallOpts{})
@@ -131,8 +131,8 @@ func (m *Executor) GetCurrentOpCounts() (map[string]big.Int, error) {
 	return opCounts, nil
 }
 
-func (m *Executor) GetConfigs() (map[string]gethwrappers.ManyChainMultiSigConfig, error) {
-	configs := make(map[string]gethwrappers.ManyChainMultiSigConfig)
+func (m *Executor) GetConfigs() (map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig, error) {
+	configs := make(map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig)
 
 	for chain, wrapper := range m.Callers {
 		config, err := wrapper.GetConfig(&bind.CallOpts{})
@@ -179,7 +179,7 @@ func (e *Executor) ValidateSignatures() (bool, error) {
 
 			if !found {
 				return false, &errors.ErrInvalidSignature{
-					ChainIdentifier:  chain,
+					ChainIdentifier:  uint64(chain),
 					RecoveredAddress: signer,
 				}
 			}
@@ -191,7 +191,7 @@ func (e *Executor) ValidateSignatures() (bool, error) {
 	for chain, config := range wrappedConfigs {
 		if !isReadyToSetRoot(*config, recoveredSigners) {
 			return false, &errors.ErrQuorumNotMet{
-				ChainIdentifier: chain,
+				ChainIdentifier: uint64(chain),
 			}
 		}
 	}
@@ -224,7 +224,7 @@ func isGroupAtConsensus(group configwrappers.Config, recoveredSigners []common.A
 	return (signerApprovalsInGroup + groupApprovals) >= int(group.Quorum)
 }
 
-func (e *Executor) SetRootOnChain(auth *bind.TransactOpts, chain string) (*types.Transaction, error) {
+func (e *Executor) SetRootOnChain(auth *bind.TransactOpts, chain ChainIdentifier) (*types.Transaction, error) {
 	metadata := e.RootMetadatas[chain]
 
 	encodedMetadata, err := metadataEncoder(metadata)

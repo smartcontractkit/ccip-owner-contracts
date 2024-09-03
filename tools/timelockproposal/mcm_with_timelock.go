@@ -37,7 +37,7 @@ type MCMSWithTimelockProposal struct {
 	MinDelay string `json:"minDelay"`
 
 	// Overridden: Map of chain identifier to chain metadata
-	ChainMetadata map[string]MCMSWithTimelockChainMetadata `json:"chainMetadata"`
+	ChainMetadata map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata `json:"chainMetadata"`
 
 	// Overridden: Operations to be executed after wrapping in a timelock
 	Transactions []BatchChainOperation `json:"transactions"`
@@ -71,13 +71,13 @@ func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcmsproposal.Proposal, 
 	mcmOnly := m.Proposal
 
 	// Start predecessor map with all chains pointing to the zero hash
-	predecessorMap := make(map[string]common.Hash)
+	predecessorMap := make(map[mcmsproposal.ChainIdentifier]common.Hash)
 	for chain := range m.ChainMetadata {
 		predecessorMap[chain] = ZERO_HASH
 	}
 
 	// Convert chain metadata
-	mcmOnly.ChainMetadata = make(map[string]mcmsproposal.ChainMetadata)
+	mcmOnly.ChainMetadata = make(map[mcmsproposal.ChainIdentifier]mcmsproposal.ChainMetadata)
 	for chain, metadata := range m.ChainMetadata {
 		mcmOnly.ChainMetadata[chain] = mcmsproposal.ChainMetadata{
 			NonceOffset: metadata.NonceOffset,

@@ -16,8 +16,8 @@ type ContractDeployBackend interface {
 	bind.DeployBackend
 }
 
-func mapMCMAddresses(metadatas map[string]ChainMetadata) map[string]common.Address {
-	m := make(map[string]common.Address)
+func mapMCMAddresses(metadatas map[ChainIdentifier]ChainMetadata) map[ChainIdentifier]common.Address {
+	m := make(map[ChainIdentifier]common.Address)
 	for k, v := range metadatas {
 		m[k] = v.MCMAddress
 	}
@@ -40,8 +40,8 @@ func mapHashes(hashes []common.Hash) [][32]byte {
 	return m
 }
 
-func mapMCMSConfigs(configs map[string]gethwrappers.ManyChainMultiSigConfig) map[string]*configwrappers.Config {
-	m := make(map[string]*configwrappers.Config)
+func mapMCMSConfigs(configs map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig) map[ChainIdentifier]*configwrappers.Config {
+	m := make(map[ChainIdentifier]*configwrappers.Config)
 	for k, v := range configs {
 		m[k] = configwrappers.NewConfigFromRaw(v)
 	}

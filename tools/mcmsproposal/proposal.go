@@ -22,7 +22,7 @@ type Proposal struct {
 	OverridePreviousRoot bool        `json:"overridePreviousRoot"`
 
 	// Map of chain identifier to chain metadata
-	ChainMetadata map[string]ChainMetadata `json:"chainMetadata"`
+	ChainMetadata map[ChainIdentifier]ChainMetadata `json:"chainMetadata"`
 
 	// This is intended to be displayed as-is to signers, to give them
 	// context for the change. File authors should templatize strings for
@@ -68,7 +68,7 @@ func (m *Proposal) Validate() error {
 	for _, t := range m.Transactions {
 		if _, ok := m.ChainMetadata[t.ChainIdentifier]; !ok {
 			return &errors.ErrMissingChainDetails{
-				ChainIdentifier: t.ChainIdentifier,
+				ChainIdentifier: uint64(t.ChainIdentifier),
 				Parameter:       "chain metadata",
 			}
 		}
@@ -76,7 +76,7 @@ func (m *Proposal) Validate() error {
 	return nil
 }
 
-func (m *Proposal) ToExecutor(clients map[string]ContractDeployBackend) (*Executor, error) {
+func (m *Proposal) ToExecutor(clients map[ChainIdentifier]ContractDeployBackend) (*Executor, error) {
 	// Create a new executor
 	executor, err := NewProposalExecutor(m, clients)
 	if err != nil {

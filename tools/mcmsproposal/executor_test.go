@@ -150,15 +150,15 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ChainMetadata{
-			"1337": {
+		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+			3379446385462418246: {
 				NonceOffset: 0,
 				MCMAddress:  mcms.Address(),
 			},
 		},
 		Transactions: []ChainOperation{
-			ChainOperation{
-				ChainIdentifier: "1337",
+			{
+				ChainIdentifier: 3379446385462418246,
 				Operation: Operation{
 					To:    timelock.Address(),
 					Value: big.NewInt(0),
@@ -169,7 +169,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[string]ContractDeployBackend{"1337": sim.Client()})
+	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim.Client()})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -192,7 +192,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	assert.NoError(t, err)
 
 	// SetRoot on the contract
-	tx, err = executor.SetRootOnChain(auths[0], "1337")
+	tx, err = executor.SetRootOnChain(auths[0], 3379446385462418246)
 	assert.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
@@ -271,15 +271,15 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ChainMetadata{
-			"1337": {
+		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+			3379446385462418246: {
 				NonceOffset: 0,
 				MCMAddress:  mcms.Address(),
 			},
 		},
 		Transactions: []ChainOperation{
 			{
-				ChainIdentifier: "1337",
+				ChainIdentifier: 3379446385462418246,
 				Operation: Operation{
 					To:    timelock.Address(),
 					Value: big.NewInt(0),
@@ -290,7 +290,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[string]ContractDeployBackend{"1337": sim.Client()})
+	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim.Client()})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -315,7 +315,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	assert.NoError(t, err)
 
 	// SetRoot on the contract
-	tx, err = executor.SetRootOnChain(auths[0], "1337")
+	tx, err = executor.SetRootOnChain(auths[0], 3379446385462418246)
 	assert.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
@@ -395,7 +395,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		data, err := timelockAbi.Pack("grantRole", role, mcms.Address())
 		assert.NoError(t, err)
 		operations[i] = ChainOperation{
-			ChainIdentifier: "1337",
+			ChainIdentifier: 3379446385462418246,
 			Operation: Operation{
 				To:    timelock.Address(),
 				Value: big.NewInt(0),
@@ -410,8 +410,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ChainMetadata{
-			"1337": {
+		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+			3379446385462418246: {
 				NonceOffset: 0,
 				MCMAddress:  mcms.Address(),
 			},
@@ -420,7 +420,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[string]ContractDeployBackend{"1337": sim.Client()})
+	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim.Client()})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -443,7 +443,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	assert.NoError(t, err)
 
 	// SetRoot on the contract
-	tx, err = executor.SetRootOnChain(auths[0], "1337")
+	tx, err = executor.SetRootOnChain(auths[0], 3379446385462418246)
 	assert.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
@@ -530,7 +530,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		data, err := timelockAbi.Pack("grantRole", role, mcms.Address())
 		assert.NoError(t, err)
 		operations[i] = ChainOperation{
-			ChainIdentifier: "1337",
+			ChainIdentifier: 3379446385462418246,
 			Operation: Operation{
 				To:    timelock.Address(),
 				Value: big.NewInt(0),
@@ -545,8 +545,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ChainMetadata{
-			"1337": {
+		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+			3379446385462418246: {
 				NonceOffset: 0,
 				MCMAddress:  mcms.Address(),
 			},
@@ -555,7 +555,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[string]ContractDeployBackend{"1337": sim.Client()})
+	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim.Client()})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -580,7 +580,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	assert.NoError(t, err)
 
 	// SetRoot on the contract
-	tx, err = executor.SetRootOnChain(auths[0], "1337")
+	tx, err = executor.SetRootOnChain(auths[0], 3379446385462418246)
 	assert.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
@@ -667,7 +667,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 		data, err := timelockAbi.Pack("grantRole", role, mcms.Address())
 		assert.NoError(t, err)
 		operations[i] = ChainOperation{
-			ChainIdentifier: "1337",
+			ChainIdentifier: 3379446385462418246,
 			Operation: Operation{
 				To:    timelock.Address(),
 				Value: big.NewInt(0),
@@ -682,8 +682,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ChainMetadata{
-			"1337": {
+		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+			3379446385462418246: {
 				NonceOffset: 0,
 				MCMAddress:  mcms.Address(),
 			},
@@ -692,7 +692,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[string]ContractDeployBackend{"1337": sim.Client()})
+	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim.Client()})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -768,7 +768,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 		data, err := timelockAbi.Pack("grantRole", role, mcms.Address())
 		assert.NoError(t, err)
 		operations[i] = ChainOperation{
-			ChainIdentifier: "1337",
+			ChainIdentifier: 3379446385462418246,
 			Operation: Operation{
 				To:    timelock.Address(),
 				Value: big.NewInt(0),
@@ -783,8 +783,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[string]ChainMetadata{
-			"1337": {
+		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+			3379446385462418246: {
 				NonceOffset: 0,
 				MCMAddress:  mcms.Address(),
 			},
@@ -793,7 +793,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[string]ContractDeployBackend{"1337": sim.Client()})
+	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{3379446385462418246: sim.Client()})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 

@@ -6,15 +6,17 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+type ChainIdentifier uint64
+
 type Operation struct {
-	To           common.Address
-	Data         []byte
-	Value        *big.Int
-	ContractType string   `json:"contractType"`
-	Tags         []string `json:"tags"`
+	To           common.Address `json:"to"`
+	Data         []byte         `json:"data"`
+	Value        *big.Int       `json:"value"`
+	ContractType string         `json:"contractType"`
+	Tags         []string       `json:"tags"`
 }
 
 type ChainOperation struct {
-	ChainIdentifier string `json:"chainIdentifier"`
+	ChainIdentifier `json:"chainIdentifier"`
 	Operation
 }
