@@ -11,10 +11,12 @@ import (
 func TestNewConfig(t *testing.T) {
 	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
 	groupSigners := []Config{
-		{Quorum: 2, Signers: []common.Address{common.HexToAddress("0x3")}},
+		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
 	}
-	config := NewConfig(1, signers, groupSigners)
+	config, err := NewConfig(1, signers, groupSigners)
 
+	assert.NoError(t, err)
+	assert.NotNil(t, config)
 	assert.Equal(t, uint8(1), config.Quorum)
 	assert.Equal(t, signers, config.Signers)
 	assert.Equal(t, groupSigners, config.GroupSigners)
@@ -22,58 +24,60 @@ func TestNewConfig(t *testing.T) {
 
 func TestNewConfigFromRaw(t *testing.T) {
 	rawConfig := gethwrappers.ManyChainMultiSigConfig{
-		GroupQuorums: [32]uint8{1, 2},
+		GroupQuorums: [32]uint8{1, 1},
 		GroupParents: [32]uint8{0, 0},
 		Signers: []gethwrappers.ManyChainMultiSigSigner{
 			{Addr: common.HexToAddress("0x1"), Group: 0},
 			{Addr: common.HexToAddress("0x2"), Group: 1},
 		},
 	}
-	config := NewConfigFromRaw(rawConfig)
+	config, err := NewConfigFromRaw(rawConfig)
 
+	assert.NoError(t, err)
+	assert.NotNil(t, config)
 	assert.Equal(t, uint8(1), config.Quorum)
 	assert.Equal(t, []common.Address{common.HexToAddress("0x1")}, config.Signers)
-	assert.Equal(t, uint8(2), config.GroupSigners[0].Quorum)
+	assert.Equal(t, uint8(1), config.GroupSigners[0].Quorum)
 	assert.Equal(t, []common.Address{common.HexToAddress("0x2")}, config.GroupSigners[0].Signers)
 }
 
 func TestValidate_Success(t *testing.T) {
 	// Test case 1: Valid configuration
-	config := NewConfig(2, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{})
-	err := config.Validate()
+	config, err := NewConfig(2, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{})
+	assert.NotNil(t, config)
 	assert.NoError(t, err)
 }
 
 func TestValidate_InvalidQuorum(t *testing.T) {
 	// Test case 2: Quorum is 0
-	config := NewConfig(0, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{})
-	err := config.Validate()
+	config, err := NewConfig(0, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{})
+	assert.Nil(t, config)
 	assert.Error(t, err)
 	assert.Equal(t, "invalid MCMS config: Quorum must be greater than 0", err.Error())
 }
 
 func TestValidate_InvalidSigners(t *testing.T) {
 	// Test case 3: No signers or groups
-	config := NewConfig(2, []common.Address{}, []Config{})
-	err := config.Validate()
+	config, err := NewConfig(2, []common.Address{}, []Config{})
+	assert.Nil(t, config)
 	assert.Error(t, err)
 	assert.Equal(t, "invalid MCMS config: Config must have at least one signer or group", err.Error())
 }
 
 func TestValidate_InvalidQuorumCount(t *testing.T) {
 	// Test case 4: Quorum is greater than the number of signers and groups
-	config := NewConfig(3, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{})
-	err := config.Validate()
+	config, err := NewConfig(3, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{})
+	assert.Nil(t, config)
 	assert.Error(t, err)
 	assert.Equal(t, "invalid MCMS config: Quorum must be less than or equal to the number of signers and groups", err.Error())
 }
 
 func TestValidate_InvalidGroupSigner(t *testing.T) {
 	// Test case 5: Invalid group signer
-	config := NewConfig(2, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{
+	config, err := NewConfig(2, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{
 		{Quorum: 0, Signers: []common.Address{}},
 	})
-	err := config.Validate()
+	assert.Nil(t, config)
 	assert.Error(t, err)
 	assert.Equal(t, "invalid MCMS config: Quorum must be greater than 0", err.Error())
 }
@@ -81,12 +85,15 @@ func TestValidate_InvalidGroupSigner(t *testing.T) {
 func TestToRawConfig(t *testing.T) {
 	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
 	groupSigners := []Config{
-		{Quorum: 2, Signers: []common.Address{common.HexToAddress("0x3")}},
+		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
 	}
-	config := NewConfig(1, signers, groupSigners)
+	config, err := NewConfig(1, signers, groupSigners)
+	assert.NotNil(t, config)
+	assert.NoError(t, err)
+
 	rawConfig := config.ToRawConfig()
 
-	assert.Equal(t, [32]uint8{1, 2}, rawConfig.GroupQuorums)
+	assert.Equal(t, [32]uint8{1, 1}, rawConfig.GroupQuorums)
 	assert.Equal(t, [32]uint8{0, 0}, rawConfig.GroupParents)
 	assert.Equal(t, common.HexToAddress("0x1"), rawConfig.Signers[0].Addr)
 	assert.Equal(t, common.HexToAddress("0x2"), rawConfig.Signers[1].Addr)
@@ -99,13 +106,10 @@ func TestToRawConfig(t *testing.T) {
 // Signers: []
 // Group signers: []
 func TestExtractSetConfigInputs_EmptyConfig(t *testing.T) {
-	config := NewConfig(0, []common.Address{}, []Config{})
-	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
-
-	assert.Equal(t, [32]uint8{}, groupQuorums)
-	assert.Equal(t, [32]uint8{}, groupParents)
-	assert.Equal(t, []common.Address{}, signerAddresses)
-	assert.Equal(t, []uint8{}, signerGroups)
+	config, err := NewConfig(0, []common.Address{}, []Config{})
+	assert.Nil(t, config)
+	assert.Error(t, err)
+	assert.Equal(t, "invalid MCMS config: Quorum must be greater than 0", err.Error())
 }
 
 // Test case 1: Valid configuration with some root signers and some groups
@@ -123,7 +127,10 @@ func TestExtractSetConfigInputs(t *testing.T) {
 	groupSigners := []Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
 	}
-	config := NewConfig(2, signers, groupSigners)
+	config, err := NewConfig(2, signers, groupSigners)
+	assert.NotNil(t, config)
+	assert.NoError(t, err)
+
 	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
 
 	assert.Equal(t, [32]uint8{2, 1}, groupQuorums)
@@ -139,7 +146,10 @@ func TestExtractSetConfigInputs(t *testing.T) {
 // Group signers: []
 func TestExtractSetConfigInputs_OnlyRootSigners(t *testing.T) {
 	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
-	config := NewConfig(1, signers, []Config{})
+	config, err := NewConfig(1, signers, []Config{})
+	assert.NotNil(t, config)
+	assert.NoError(t, err)
+
 	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
 
 	assert.Equal(t, [32]uint8{1, 0}, groupQuorums)
@@ -176,7 +186,10 @@ func TestExtractSetConfigInputs_OnlyGroups(t *testing.T) {
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x4")}},
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x5")}},
 	}
-	config := NewConfig(2, []common.Address{}, groupSigners)
+	config, err := NewConfig(2, []common.Address{}, groupSigners)
+	assert.NotNil(t, config)
+	assert.NoError(t, err)
+
 	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
 
 	assert.Equal(t, [32]uint8{2, 1, 1, 1}, groupQuorums)
@@ -212,7 +225,10 @@ func TestExtractSetConfigInputs_NestedSignersAndGroups(t *testing.T) {
 		}},
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x5")}},
 	}
-	config := NewConfig(2, signers, groupSigners)
+	config, err := NewConfig(2, signers, groupSigners)
+	assert.NotNil(t, config)
+	assert.NoError(t, err)
+
 	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
 
 	assert.Equal(t, [32]uint8{2, 1, 1, 1}, groupQuorums)
@@ -248,7 +264,10 @@ func TestExtractSetConfigInputs_UnsortedSignersAndGroups(t *testing.T) {
 		}},
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x5")}},
 	}
-	config := NewConfig(2, signers, groupSigners)
+	config, err := NewConfig(2, signers, groupSigners)
+	assert.NotNil(t, config)
+	assert.NoError(t, err)
+
 	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
 
 	assert.Equal(t, [32]uint8{2, 1, 1, 1}, groupQuorums)
@@ -262,8 +281,13 @@ func TestConfigEquals_Success(t *testing.T) {
 	groupSigners := []Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
 	}
-	config1 := NewConfig(2, signers, groupSigners)
-	config2 := NewConfig(2, signers, groupSigners)
+	config1, err := NewConfig(2, signers, groupSigners)
+	assert.NoError(t, err)
+	assert.NotNil(t, config1)
+
+	config2, err := NewConfig(2, signers, groupSigners)
+	assert.NoError(t, err)
+	assert.NotNil(t, config2)
 
 	assert.True(t, config1.Equals(config2))
 }
@@ -272,8 +296,13 @@ func TestConfigEquals_Failure_MismatchingQuorum(t *testing.T) {
 	groupSigners := []Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
 	}
-	config1 := NewConfig(2, signers, groupSigners)
-	config2 := NewConfig(1, signers, groupSigners)
+	config1, err := NewConfig(2, signers, groupSigners)
+	assert.NoError(t, err)
+	assert.NotNil(t, config1)
+
+	config2, err := NewConfig(1, signers, groupSigners)
+	assert.NoError(t, err)
+	assert.NotNil(t, config2)
 
 	assert.False(t, config1.Equals(config2))
 }
@@ -284,8 +313,13 @@ func TestConfigEquals_Failure_MismatchingSigners(t *testing.T) {
 	groupSigners := []Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
 	}
-	config1 := NewConfig(2, signers1, groupSigners)
-	config2 := NewConfig(2, signers2, groupSigners)
+	config1, err := NewConfig(2, signers1, groupSigners)
+	assert.NotNil(t, config1)
+	assert.NoError(t, err)
+
+	config2, err := NewConfig(2, signers2, groupSigners)
+	assert.NotNil(t, config2)
+	assert.NoError(t, err)
 
 	assert.False(t, config1.Equals(config2))
 }
@@ -298,8 +332,13 @@ func TestConfigEquals_Failure_MismatchingGroupSigners(t *testing.T) {
 	groupSigners2 := []Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x4")}},
 	}
-	config1 := NewConfig(2, signers, groupSigners1)
-	config2 := NewConfig(2, signers, groupSigners2)
+	config1, err := NewConfig(2, signers, groupSigners1)
+	assert.NotNil(t, config1)
+	assert.NoError(t, err)
+
+	config2, err := NewConfig(2, signers, groupSigners2)
+	assert.NotNil(t, config2)
+	assert.NoError(t, err)
 
 	assert.False(t, config1.Equals(config2))
 }

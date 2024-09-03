@@ -96,7 +96,10 @@ func (e *Executor) ValidateMCMSConfigs() error {
 		return err
 	}
 
-	wrappedConfigs := mapMCMSConfigs(configs)
+	wrappedConfigs, err := transformMCMSConfigs(configs)
+	if err != nil {
+		return err
+	}
 
 	// Validate that all configs are equivalent
 	sortedChains := sortedChainIdentifiers(e.Proposal.ChainMetadata)
@@ -187,7 +190,11 @@ func (e *Executor) ValidateSignatures() (bool, error) {
 	}
 
 	// Validate if the quorum is met
-	wrappedConfigs := mapMCMSConfigs(configs)
+	wrappedConfigs, err := transformMCMSConfigs(configs)
+	if err != nil {
+		return false, err
+	}
+
 	for chain, config := range wrappedConfigs {
 		if !isReadyToSetRoot(*config, recoveredSigners) {
 			return false, &errors.ErrQuorumNotMet{

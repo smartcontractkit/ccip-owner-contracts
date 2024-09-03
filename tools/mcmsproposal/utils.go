@@ -40,12 +40,16 @@ func transformHashes(hashes []common.Hash) [][32]byte {
 	return m
 }
 
-func mapMCMSConfigs(configs map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig) map[ChainIdentifier]*configwrappers.Config {
+func transformMCMSConfigs(configs map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig) (map[ChainIdentifier]*configwrappers.Config, error) {
 	m := make(map[ChainIdentifier]*configwrappers.Config)
 	for k, v := range configs {
-		m[k] = configwrappers.NewConfigFromRaw(v)
+		config, err := configwrappers.NewConfigFromRaw(v)
+		if err != nil {
+			return nil, err
+		}
+		m[k] = config
 	}
-	return m
+	return m, nil
 }
 
 // ABIEncode is the equivalent of abi.encode.

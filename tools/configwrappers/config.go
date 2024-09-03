@@ -18,15 +18,21 @@ type Config struct {
 	GroupSigners []Config         `json:"groupSigners"`
 }
 
-func NewConfig(quorum uint8, signers []common.Address, groupSigners []Config) *Config {
-	return &Config{
+func NewConfig(quorum uint8, signers []common.Address, groupSigners []Config) (*Config, error) {
+	config := Config{
 		Quorum:       quorum,
 		Signers:      signers,
 		GroupSigners: groupSigners,
 	}
+
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
+	return &config, nil
 }
 
-func NewConfigFromRaw(rawConfig gethwrappers.ManyChainMultiSigConfig) *Config {
+func NewConfigFromRaw(rawConfig gethwrappers.ManyChainMultiSigConfig) (*Config, error) {
 	groupToSigners := make([][]common.Address, len(rawConfig.GroupQuorums))
 	for _, signer := range rawConfig.Signers {
 		groupToSigners[signer.Group] = append(groupToSigners[signer.Group], signer.Addr)
@@ -52,7 +58,11 @@ func NewConfigFromRaw(rawConfig gethwrappers.ManyChainMultiSigConfig) *Config {
 		}
 	}
 
-	return &groups[0]
+	if err := groups[0].Validate(); err != nil {
+		return nil, err
+	}
+
+	return &groups[0], nil
 }
 
 func (c *Config) Validate() error {
