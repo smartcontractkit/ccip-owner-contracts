@@ -122,25 +122,11 @@ func (c *Config) Equals(other *Config) bool {
 	}
 
 	// Compare all group signers in first exist in second (order doesn't matter)
+	// the reverse is not necessary because the lengths are already checked
 	for i := range c.GroupSigners {
 		found := false
 		for j := range other.GroupSigners {
 			if c.GroupSigners[i].Equals(&other.GroupSigners[j]) {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			return false
-		}
-	}
-
-	// Compare all group signers in second exist in first (order doesn't matter)
-	for i := range other.GroupSigners {
-		found := false
-		for j := range c.GroupSigners {
-			if other.GroupSigners[i].Equals(&c.GroupSigners[j]) {
 				found = true
 				break
 			}

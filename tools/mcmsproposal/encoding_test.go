@@ -1,4 +1,4 @@
-package mcms_proposal
+package mcmsproposal
 
 import (
 	"math/big"
@@ -83,17 +83,17 @@ func TestBuildOperations(t *testing.T) {
 	transactions := []ChainOperation{
 		{ChainIdentifier: "1",
 			Operation: Operation{
-				To: common.HexToAddress("0x1"), Data: "0x", Value: 1,
+				To: common.HexToAddress("0x1"), Data: common.Hex2Bytes("0x"), Value: big.NewInt(1),
 			},
 		},
 		{ChainIdentifier: "1",
 			Operation: Operation{
-				To: common.HexToAddress("0x2"), Data: "0x", Value: 2,
+				To: common.HexToAddress("0x2"), Data: common.Hex2Bytes("0x"), Value: big.NewInt(2),
 			},
 		},
 		{ChainIdentifier: "2",
 			Operation: Operation{
-				To: common.HexToAddress("0x3"), Data: "0x", Value: 3,
+				To: common.HexToAddress("0x3"), Data: common.Hex2Bytes("0x"), Value: big.NewInt(3),
 			},
 		},
 	}

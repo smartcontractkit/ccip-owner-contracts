@@ -1,4 +1,4 @@
-package mcms_proposal
+package mcmsproposal
 
 import (
 	"testing"

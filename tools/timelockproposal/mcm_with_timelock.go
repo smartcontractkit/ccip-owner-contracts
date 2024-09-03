@@ -1,4 +1,4 @@
-package timelock_proposal
+package timelockproposal
 
 import (
 	"math/big"
@@ -9,13 +9,13 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 	owner "github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/mcms_proposal"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/mcmsproposal"
 )
 
-var ZERO_HASH = common.BytesToHash([]byte{})
+var ZERO_HASH = common.Hash{}
 
 type MCMSWithTimelockChainMetadata struct {
-	mcms_proposal.ChainMetadata
+	mcmsproposal.ChainMetadata
 	TimelockAddress common.Address `json:"timelockAddress"`
 }
 
@@ -28,7 +28,7 @@ const (
 )
 
 type MCMSWithTimelockProposal struct {
-	mcms_proposal.Proposal
+	mcmsproposal.Proposal
 
 	Operation TimelockOperation `json:"operation"` // Always 'schedule', 'cancel', or 'bypass'
 
@@ -67,7 +67,7 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 	return nil
 }
 
-func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcms_proposal.Proposal, error) {
+func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcmsproposal.Proposal, error) {
 	mcmOnly := m.Proposal
 
 	// Start predecessor map with all chains pointing to the zero hash
@@ -77,9 +77,9 @@ func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcms_proposal.Proposal,
 	}
 
 	// Convert chain metadata
-	mcmOnly.ChainMetadata = make(map[string]mcms_proposal.ChainMetadata)
+	mcmOnly.ChainMetadata = make(map[string]mcmsproposal.ChainMetadata)
 	for chain, metadata := range m.ChainMetadata {
-		mcmOnly.ChainMetadata[chain] = mcms_proposal.ChainMetadata{
+		mcmOnly.ChainMetadata[chain] = mcmsproposal.ChainMetadata{
 			NonceOffset: metadata.NonceOffset,
 			MCMAddress:  metadata.MCMAddress,
 		}
@@ -92,8 +92,8 @@ func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcms_proposal.Proposal,
 		for _, op := range t.Batch {
 			calls = append(calls, owner.RBACTimelockCall{
 				Target: op.To,
-				Data:   common.FromHex(op.Data),
-				Value:  big.NewInt(int64(op.Value)),
+				Data:   op.Data,
+				Value:  op.Value,
 			})
 			tags = append(tags, op.Tags...)
 		}
@@ -103,19 +103,19 @@ func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcms_proposal.Proposal,
 
 		abi, err := owner.RBACTimelockMetaData.GetAbi()
 		if err != nil {
-			return mcms_proposal.Proposal{}, err
+			return mcmsproposal.Proposal{}, err
 		}
 		data, err := abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
 		if err != nil {
-			return mcms_proposal.Proposal{}, err
+			return mcmsproposal.Proposal{}, err
 		}
 
-		mcmOnly.Transactions = append(mcmOnly.Transactions, mcms_proposal.ChainOperation{
+		mcmOnly.Transactions = append(mcmOnly.Transactions, mcmsproposal.ChainOperation{
 			ChainIdentifier: t.ChainIdentifier,
-			Operation: mcms_proposal.Operation{
+			Operation: mcmsproposal.Operation{
 				To:           m.ChainMetadata[t.ChainIdentifier].TimelockAddress,
-				Data:         common.Bytes2Hex(data),
-				Value:        0, // TODO: is this right?
+				Data:         data,
+				Value:        big.NewInt(0), // TODO: is this right?
 				ContractType: "RBACTimelock",
 				Tags:         tags,
 			},
@@ -123,7 +123,7 @@ func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcms_proposal.Proposal,
 
 		predecessorMap[t.ChainIdentifier], err = hashOperationBatch(calls, predecessor, salt)
 		if err != nil {
-			return mcms_proposal.Proposal{}, err
+			return mcmsproposal.Proposal{}, err
 		}
 	}
 

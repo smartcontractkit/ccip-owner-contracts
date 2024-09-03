@@ -1,4 +1,4 @@
-package mcms_proposal
+package mcmsproposal
 
 import (
 	"math/big"
@@ -86,8 +86,8 @@ func buildOperations(
 			MultiSig: rootMetadata.MultiSig,
 			Nonce:    big.NewInt(rootMetadata.PreOpCount.Int64() + int64(chainIdx[tx.ChainIdentifier])),
 			To:       tx.To,
-			Data:     common.FromHex(tx.Data),
-			Value:    big.NewInt(int64(tx.Value)),
+			Data:     tx.Data,
+			Value:    tx.Value,
 		}
 
 		chainAgnosticOps = append(chainAgnosticOps, op)

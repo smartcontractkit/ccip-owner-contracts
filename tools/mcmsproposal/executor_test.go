@@ -1,4 +1,4 @@
-package mcms_proposal
+package mcmsproposal
 
 import (
 	"crypto/ecdsa"
@@ -161,8 +161,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 				ChainIdentifier: "1337",
 				Operation: Operation{
 					To:    timelock.Address(),
-					Value: 0,
-					Data:  common.Bytes2Hex(grantRoleData),
+					Value: big.NewInt(0),
+					Data:  grantRoleData,
 				},
 			},
 		},
@@ -282,8 +282,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 				ChainIdentifier: "1337",
 				Operation: Operation{
 					To:    timelock.Address(),
-					Value: 0,
-					Data:  common.Bytes2Hex(grantRoleData),
+					Value: big.NewInt(0),
+					Data:  grantRoleData,
 				},
 			},
 		},
@@ -398,8 +398,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 			ChainIdentifier: "1337",
 			Operation: Operation{
 				To:    timelock.Address(),
-				Value: 0,
-				Data:  common.Bytes2Hex(data),
+				Value: big.NewInt(0),
+				Data:  data,
 			},
 		}
 	}
@@ -533,8 +533,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 			ChainIdentifier: "1337",
 			Operation: Operation{
 				To:    timelock.Address(),
-				Value: 0,
-				Data:  common.Bytes2Hex(data),
+				Value: big.NewInt(0),
+				Data:  data,
 			},
 		}
 	}
@@ -670,8 +670,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 			ChainIdentifier: "1337",
 			Operation: Operation{
 				To:    timelock.Address(),
-				Value: 0,
-				Data:  common.Bytes2Hex(data),
+				Value: big.NewInt(0),
+				Data:  data,
 			},
 		}
 	}
@@ -771,8 +771,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 			ChainIdentifier: "1337",
 			Operation: Operation{
 				To:    timelock.Address(),
-				Value: 0,
-				Data:  common.Bytes2Hex(data),
+				Value: big.NewInt(0),
+				Data:  data,
 			},
 		}
 	}

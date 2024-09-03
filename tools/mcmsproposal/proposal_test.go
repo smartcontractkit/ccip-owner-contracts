@@ -1,6 +1,7 @@
-package mcms_proposal
+package mcmsproposal
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -28,8 +29,8 @@ func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 				ChainIdentifier: TestChain,
 				Operation: Operation{
 					To:           TestAddress,
-					Value:        0,
-					Data:         "0x",
+					Value:        big.NewInt(0),
+					Data:         common.Hex2Bytes("0x"),
 					ContractType: "Sample contract",
 					Tags:         []string{"tag1", "tag2"},
 				},
@@ -60,8 +61,8 @@ func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
 				ChainIdentifier: TestChain,
 				Operation: Operation{
 					To:           TestAddress,
-					Value:        0,
-					Data:         "0x",
+					Value:        big.NewInt(0),
+					Data:         common.Hex2Bytes("0x"),
 					ContractType: "Sample contract",
 					Tags:         []string{"tag1", "tag2"},
 				},
@@ -93,8 +94,8 @@ func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
 				ChainIdentifier: TestChain,
 				Operation: Operation{
 					To:           TestAddress,
-					Value:        0,
-					Data:         "0x",
+					Value:        big.NewInt(0),
+					Data:         common.Hex2Bytes("0x"),
 					ContractType: "Sample contract",
 					Tags:         []string{"tag1", "tag2"},
 				},
@@ -121,8 +122,8 @@ func TestMCMSOnlyProposal_Validate_InvalidChainMetadata(t *testing.T) {
 				ChainIdentifier: TestChain,
 				Operation: Operation{
 					To:           TestAddress,
-					Value:        0,
-					Data:         "0x",
+					Value:        big.NewInt(0),
+					Data:         common.Hex2Bytes("0x"),
 					ContractType: "Sample contract",
 					Tags:         []string{"tag1", "tag2"},
 				},
@@ -154,8 +155,8 @@ func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
 				ChainIdentifier: TestChain,
 				Operation: Operation{
 					To:           TestAddress,
-					Value:        0,
-					Data:         "0x",
+					Value:        big.NewInt(0),
+					Data:         common.Hex2Bytes("0x"),
 					ContractType: "Sample contract",
 					Tags:         []string{"tag1", "tag2"},
 				},
@@ -209,8 +210,8 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 				ChainIdentifier: "chain2",
 				Operation: Operation{
 					To:           TestAddress,
-					Value:        0,
-					Data:         "0x",
+					Value:        big.NewInt(0),
+					Data:         common.Hex2Bytes("0x"),
 					ContractType: "Sample contract",
 					Tags:         []string{"tag1", "tag2"},
 				},

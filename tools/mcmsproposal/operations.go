@@ -1,11 +1,15 @@
-package mcms_proposal
+package mcmsproposal
 
-import "github.com/ethereum/go-ethereum/common"
+import (
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
+)
 
 type Operation struct {
 	To           common.Address
-	Data         string
-	Value        uint64
+	Data         []byte
+	Value        *big.Int
 	ContractType string   `json:"contractType"`
 	Tags         []string `json:"tags"`
 }
