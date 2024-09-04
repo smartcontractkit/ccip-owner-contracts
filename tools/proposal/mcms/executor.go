@@ -1,4 +1,4 @@
-package mcmsproposal
+package mcms
 
 import (
 	"encoding/binary"

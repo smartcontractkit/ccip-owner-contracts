@@ -1,4 +1,4 @@
-package timelockproposal
+package timelock
 
 import (
 	"crypto/ecdsa"
@@ -16,25 +16,24 @@ import (
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/configwrappers"
 	mcm_errors "github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
-	owner "github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/mcmsproposal"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
 	"github.com/stretchr/testify/assert"
 )
 
 var TestAddress = common.HexToAddress("0x1234567890abcdef")
-var TestChain1 = mcmsproposal.ChainIdentifier(3379446385462418246)
-var TestChain2 = mcmsproposal.ChainIdentifier(16015286601757825753)
-var TestChain3 = mcmsproposal.ChainIdentifier(10344971235874465080)
+var TestChain1 = mcms.ChainIdentifier(3379446385462418246)
+var TestChain2 = mcms.ChainIdentifier(16015286601757825753)
+var TestChain3 = mcms.ChainIdentifier(10344971235874465080)
 
 func TestValidate_ValidProposal(t *testing.T) {
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
-		[]mcmsproposal.Signature{},
+		[]mcms.Signature{},
 		false,
-		map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcmsproposal.ChainMetadata{
+				ChainMetadata: mcms.ChainMetadata{
 					NonceOffset: 1,
 					MCMAddress:  TestAddress,
 				},
@@ -45,7 +44,7 @@ func TestValidate_ValidProposal(t *testing.T) {
 		[]BatchChainOperation{
 			{
 				ChainIdentifier: TestChain1,
-				Batch: []mcmsproposal.Operation{
+				Batch: []mcms.Operation{
 					{
 						To:           TestAddress,
 						Value:        big.NewInt(0),
@@ -68,11 +67,11 @@ func TestValidate_InvalidOperation(t *testing.T) {
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
-		[]mcmsproposal.Signature{},
+		[]mcms.Signature{},
 		false,
-		map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcmsproposal.ChainMetadata{
+				ChainMetadata: mcms.ChainMetadata{
 					NonceOffset: 1,
 					MCMAddress:  TestAddress,
 				},
@@ -83,7 +82,7 @@ func TestValidate_InvalidOperation(t *testing.T) {
 		[]BatchChainOperation{
 			{
 				ChainIdentifier: TestChain1,
-				Batch: []mcmsproposal.Operation{
+				Batch: []mcms.Operation{
 					{
 						To:           TestAddress,
 						Value:        big.NewInt(0),
@@ -107,11 +106,11 @@ func TestValidate_InvalidMinDelaySchedule(t *testing.T) {
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
-		[]mcmsproposal.Signature{},
+		[]mcms.Signature{},
 		false,
-		map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcmsproposal.ChainMetadata{
+				ChainMetadata: mcms.ChainMetadata{
 					NonceOffset: 1,
 					MCMAddress:  TestAddress,
 				},
@@ -122,7 +121,7 @@ func TestValidate_InvalidMinDelaySchedule(t *testing.T) {
 		[]BatchChainOperation{
 			{
 				ChainIdentifier: TestChain1,
-				Batch: []mcmsproposal.Operation{
+				Batch: []mcms.Operation{
 					{
 						To:           TestAddress,
 						Value:        big.NewInt(0),
@@ -146,11 +145,11 @@ func TestValidate_InvalidMinDelayBypassShouldBeValid(t *testing.T) {
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
-		[]mcmsproposal.Signature{},
+		[]mcms.Signature{},
 		false,
-		map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcmsproposal.ChainMetadata{
+				ChainMetadata: mcms.ChainMetadata{
 					NonceOffset: 1,
 					MCMAddress:  TestAddress,
 				},
@@ -161,7 +160,7 @@ func TestValidate_InvalidMinDelayBypassShouldBeValid(t *testing.T) {
 		[]BatchChainOperation{
 			{
 				ChainIdentifier: TestChain1,
-				Batch: []mcmsproposal.Operation{
+				Batch: []mcms.Operation{
 					{
 						To:           TestAddress,
 						Value:        big.NewInt(0),
@@ -303,7 +302,7 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 	}
 
 	// Accept the ownership of the ManyChainMultiSig
-	tx, err = timelock.BypasserExecuteBatch(auths[0], []owner.RBACTimelockCall{
+	tx, err = timelock.BypasserExecuteBatch(auths[0], []gethwrappers.RBACTimelockCall{
 		{
 			Target: mcms.Address(),
 			Data:   acceptOwnershipData,
@@ -361,12 +360,12 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 }
 
 func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
-	keys, auths, sim, mcms, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
+	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	assert.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
-	assert.NotNil(t, mcms)
+	assert.NotNil(t, mcmsObj)
 	assert.NotNil(t, timelock)
 
 	// Construct example transaction to grant EOA the PROPOSER role
@@ -386,13 +385,13 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
-		[]mcmsproposal.Signature{},
+		[]mcms.Signature{},
 		false,
-		map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcmsproposal.ChainMetadata{
+				ChainMetadata: mcms.ChainMetadata{
 					NonceOffset: 0,
-					MCMAddress:  mcms.Address(),
+					MCMAddress:  mcmsObj.Address(),
 				},
 				TimelockAddress: timelock.Address(),
 			},
@@ -401,7 +400,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 		[]BatchChainOperation{
 			{
 				ChainIdentifier: TestChain1,
-				Batch: []mcmsproposal.Operation{
+				Batch: []mcms.Operation{
 					{
 						To:    timelock.Address(),
 						Value: big.NewInt(0),
@@ -422,7 +421,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	assert.NotNil(t, mcmsProposal)
 
 	// Construct executor
-	executor, err := mcmsProposal.ToExecutor(map[mcmsproposal.ChainIdentifier]mcmsproposal.ContractDeployBackend{TestChain1: sim})
+	executor, err := mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -435,7 +434,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Construct a signature
-	sigObj, err := mcmsproposal.NewSignatureFromBytes(sig)
+	sigObj, err := mcms.NewSignatureFromBytes(sig)
 	assert.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
@@ -451,7 +450,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
-	root, err := mcms.GetRoot(&bind.CallOpts{})
+	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
 	assert.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
@@ -478,7 +477,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	}
 
 	// Validate Contract State and verify operation was scheduled
-	grantRoleCall := []owner.RBACTimelockCall{
+	grantRoleCall := []gethwrappers.RBACTimelockCall{
 		{
 			Target: timelock.Address(),
 			Value:  big.NewInt(0),
@@ -534,12 +533,12 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 }
 
 func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
-	keys, auths, sim, mcms, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
+	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	assert.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
-	assert.NotNil(t, mcms)
+	assert.NotNil(t, mcmsObj)
 	assert.NotNil(t, timelock)
 
 	// Construct example transaction to grant EOA the PROPOSER role
@@ -559,13 +558,13 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
-		[]mcmsproposal.Signature{},
+		[]mcms.Signature{},
 		false,
-		map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcmsproposal.ChainMetadata{
+				ChainMetadata: mcms.ChainMetadata{
 					NonceOffset: 0,
-					MCMAddress:  mcms.Address(),
+					MCMAddress:  mcmsObj.Address(),
 				},
 				TimelockAddress: timelock.Address(),
 			},
@@ -574,7 +573,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 		[]BatchChainOperation{
 			{
 				ChainIdentifier: TestChain1,
-				Batch: []mcmsproposal.Operation{
+				Batch: []mcms.Operation{
 					{
 						To:    timelock.Address(),
 						Value: big.NewInt(0),
@@ -595,7 +594,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	assert.NotNil(t, mcmsProposal)
 
 	// Construct executor
-	executor, err := mcmsProposal.ToExecutor(map[mcmsproposal.ChainIdentifier]mcmsproposal.ContractDeployBackend{TestChain1: sim})
+	executor, err := mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -608,7 +607,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Construct a signature
-	sigObj, err := mcmsproposal.NewSignatureFromBytes(sig)
+	sigObj, err := mcms.NewSignatureFromBytes(sig)
 	assert.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
@@ -624,7 +623,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
-	root, err := mcms.GetRoot(&bind.CallOpts{})
+	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
 	assert.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
@@ -670,7 +669,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	assert.NotNil(t, mcmsProposal)
 
 	// Construct executor
-	executor, err = mcmsProposal.ToExecutor(map[mcmsproposal.ChainIdentifier]mcmsproposal.ContractDeployBackend{TestChain1: sim})
+	executor, err = mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -683,7 +682,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Construct a signature
-	sigObj, err = mcmsproposal.NewSignatureFromBytes(sig)
+	sigObj, err = mcms.NewSignatureFromBytes(sig)
 	assert.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
@@ -699,7 +698,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
-	root, err = mcms.GetRoot(&bind.CallOpts{})
+	root, err = mcmsObj.GetRoot(&bind.CallOpts{})
 	assert.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
@@ -729,12 +728,12 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 }
 
 func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
-	keys, auths, sim, mcms, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
+	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	assert.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
-	assert.NotNil(t, mcms)
+	assert.NotNil(t, mcmsObj)
 	assert.NotNil(t, timelock)
 
 	// Construct example transaction to grant EOA the PROPOSER role
@@ -754,13 +753,13 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
-		[]mcmsproposal.Signature{},
+		[]mcms.Signature{},
 		false,
-		map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcmsproposal.ChainMetadata{
+				ChainMetadata: mcms.ChainMetadata{
 					NonceOffset: 0,
-					MCMAddress:  mcms.Address(),
+					MCMAddress:  mcmsObj.Address(),
 				},
 				TimelockAddress: timelock.Address(),
 			},
@@ -769,7 +768,7 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 		[]BatchChainOperation{
 			{
 				ChainIdentifier: TestChain1,
-				Batch: []mcmsproposal.Operation{
+				Batch: []mcms.Operation{
 					{
 						To:    timelock.Address(),
 						Value: big.NewInt(0),
@@ -790,7 +789,7 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 	assert.NotNil(t, mcmsProposal)
 
 	// Construct executor
-	executor, err := mcmsProposal.ToExecutor(map[mcmsproposal.ChainIdentifier]mcmsproposal.ContractDeployBackend{TestChain1: sim})
+	executor, err := mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -803,7 +802,7 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Construct a signature
-	sigObj, err := mcmsproposal.NewSignatureFromBytes(sig)
+	sigObj, err := mcms.NewSignatureFromBytes(sig)
 	assert.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
@@ -819,7 +818,7 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
-	root, err := mcms.GetRoot(&bind.CallOpts{})
+	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
 	assert.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
@@ -843,12 +842,12 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 }
 
 func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
-	keys, auths, sim, mcms, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
+	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	assert.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
-	assert.NotNil(t, mcms)
+	assert.NotNil(t, mcmsObj)
 	assert.NotNil(t, timelock)
 
 	// Construct example transactions
@@ -861,11 +860,11 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
 	assert.NoError(t, err)
 
-	operations := make([]mcmsproposal.Operation, 3)
+	operations := make([]mcms.Operation, 3)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole} {
 		data, err := timelockAbi.Pack("grantRole", role, auths[0].From)
 		assert.NoError(t, err)
-		operations[i] = mcmsproposal.Operation{
+		operations[i] = mcms.Operation{
 			To:    timelock.Address(),
 			Value: big.NewInt(0),
 			Data:  data,
@@ -887,13 +886,13 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
-		[]mcmsproposal.Signature{},
+		[]mcms.Signature{},
 		false,
-		map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcmsproposal.ChainMetadata{
+				ChainMetadata: mcms.ChainMetadata{
 					NonceOffset: 0,
-					MCMAddress:  mcms.Address(),
+					MCMAddress:  mcmsObj.Address(),
 				},
 				TimelockAddress: timelock.Address(),
 			},
@@ -917,7 +916,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	assert.NotNil(t, mcmsProposal)
 
 	// Construct executor
-	executor, err := mcmsProposal.ToExecutor(map[mcmsproposal.ChainIdentifier]mcmsproposal.ContractDeployBackend{TestChain1: sim})
+	executor, err := mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -930,7 +929,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Construct a signature
-	sigObj, err := mcmsproposal.NewSignatureFromBytes(sig)
+	sigObj, err := mcms.NewSignatureFromBytes(sig)
 	assert.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
@@ -946,7 +945,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
-	root, err := mcms.GetRoot(&bind.CallOpts{})
+	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
 	assert.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
@@ -973,7 +972,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	}
 
 	// Validate Contract State and verify operation was scheduled
-	grantRoleCalls := []owner.RBACTimelockCall{
+	grantRoleCalls := []gethwrappers.RBACTimelockCall{
 		{
 			Target: timelock.Address(),
 			Value:  big.NewInt(0),
@@ -1045,12 +1044,12 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 }
 
 func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
-	keys, auths, sim, mcms, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
+	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	assert.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
-	assert.NotNil(t, mcms)
+	assert.NotNil(t, mcmsObj)
 	assert.NotNil(t, timelock)
 
 	// Construct example transactions
@@ -1063,11 +1062,11 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
 	assert.NoError(t, err)
 
-	operations := make([]mcmsproposal.Operation, 3)
+	operations := make([]mcms.Operation, 3)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole} {
 		data, err := timelockAbi.Pack("grantRole", role, auths[0].From)
 		assert.NoError(t, err)
-		operations[i] = mcmsproposal.Operation{
+		operations[i] = mcms.Operation{
 			To:    timelock.Address(),
 			Value: big.NewInt(0),
 			Data:  data,
@@ -1089,13 +1088,13 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
-		[]mcmsproposal.Signature{},
+		[]mcms.Signature{},
 		false,
-		map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcmsproposal.ChainMetadata{
+				ChainMetadata: mcms.ChainMetadata{
 					NonceOffset: 0,
-					MCMAddress:  mcms.Address(),
+					MCMAddress:  mcmsObj.Address(),
 				},
 				TimelockAddress: timelock.Address(),
 			},
@@ -1119,7 +1118,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	assert.NotNil(t, mcmsProposal)
 
 	// Construct executor
-	executor, err := mcmsProposal.ToExecutor(map[mcmsproposal.ChainIdentifier]mcmsproposal.ContractDeployBackend{TestChain1: sim})
+	executor, err := mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -1132,7 +1131,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Construct a signature
-	sigObj, err := mcmsproposal.NewSignatureFromBytes(sig)
+	sigObj, err := mcms.NewSignatureFromBytes(sig)
 	assert.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
@@ -1148,7 +1147,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
-	root, err := mcms.GetRoot(&bind.CallOpts{})
+	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
 	assert.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
@@ -1194,7 +1193,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	assert.NotNil(t, mcmsProposal)
 
 	// Construct executor
-	executor, err = mcmsProposal.ToExecutor(map[mcmsproposal.ChainIdentifier]mcmsproposal.ContractDeployBackend{TestChain1: sim})
+	executor, err = mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -1207,7 +1206,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Construct a signature
-	sigObj, err = mcmsproposal.NewSignatureFromBytes(sig)
+	sigObj, err = mcms.NewSignatureFromBytes(sig)
 	assert.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
@@ -1223,7 +1222,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
-	root, err = mcms.GetRoot(&bind.CallOpts{})
+	root, err = mcmsObj.GetRoot(&bind.CallOpts{})
 	assert.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
@@ -1253,12 +1252,12 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 }
 
 func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
-	keys, auths, sim, mcms, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
+	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	assert.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
-	assert.NotNil(t, mcms)
+	assert.NotNil(t, mcmsObj)
 	assert.NotNil(t, timelock)
 
 	// Construct example transactions
@@ -1271,11 +1270,11 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
 	assert.NoError(t, err)
 
-	operations := make([]mcmsproposal.Operation, 3)
+	operations := make([]mcms.Operation, 3)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole} {
 		data, err := timelockAbi.Pack("grantRole", role, auths[0].From)
 		assert.NoError(t, err)
-		operations[i] = mcmsproposal.Operation{
+		operations[i] = mcms.Operation{
 			To:    timelock.Address(),
 			Value: big.NewInt(0),
 			Data:  data,
@@ -1297,13 +1296,13 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
-		[]mcmsproposal.Signature{},
+		[]mcms.Signature{},
 		false,
-		map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcmsproposal.ChainMetadata{
+				ChainMetadata: mcms.ChainMetadata{
 					NonceOffset: 0,
-					MCMAddress:  mcms.Address(),
+					MCMAddress:  mcmsObj.Address(),
 				},
 				TimelockAddress: timelock.Address(),
 			},
@@ -1327,7 +1326,7 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 	assert.NotNil(t, mcmsProposal)
 
 	// Construct executor
-	executor, err := mcmsProposal.ToExecutor(map[mcmsproposal.ChainIdentifier]mcmsproposal.ContractDeployBackend{TestChain1: sim})
+	executor, err := mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -1340,7 +1339,7 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Construct a signature
-	sigObj, err := mcmsproposal.NewSignatureFromBytes(sig)
+	sigObj, err := mcms.NewSignatureFromBytes(sig)
 	assert.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
@@ -1356,7 +1355,7 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
-	root, err := mcms.GetRoot(&bind.CallOpts{})
+	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
 	assert.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)

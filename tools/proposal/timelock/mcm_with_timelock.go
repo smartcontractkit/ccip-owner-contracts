@@ -1,4 +1,4 @@
-package timelockproposal
+package timelock
 
 import (
 	"math/big"
@@ -8,13 +8,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 	owner "github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/mcmsproposal"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
 )
 
 var ZERO_HASH = common.Hash{}
 
 type MCMSWithTimelockChainMetadata struct {
-	mcmsproposal.ChainMetadata
+	mcms.ChainMetadata
 	TimelockAddress common.Address `json:"timelockAddress"`
 }
 
@@ -27,7 +27,7 @@ const (
 )
 
 type MCMSWithTimelockProposal struct {
-	mcmsproposal.Proposal
+	mcms.Proposal
 
 	Operation TimelockOperation `json:"operation"` // Always 'schedule', 'cancel', or 'bypass'
 
@@ -35,7 +35,7 @@ type MCMSWithTimelockProposal struct {
 	MinDelay string `json:"minDelay"`
 
 	// Overridden: Map of chain identifier to chain metadata
-	ChainMetadata map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata `json:"chainMetadata"`
+	ChainMetadata map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata `json:"chainMetadata"`
 
 	// Overridden: Operations to be executed after wrapping in a timelock
 	Transactions []BatchChainOperation `json:"transactions"`
@@ -44,16 +44,16 @@ type MCMSWithTimelockProposal struct {
 func NewMCMSWithTimelockProposal(
 	version string,
 	validUntil uint32,
-	signatures []mcmsproposal.Signature,
+	signatures []mcms.Signature,
 	overridePreviousRoot bool,
-	chainMetadata map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata,
+	chainMetadata map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata,
 	description string,
 	transactions []BatchChainOperation,
 	operation TimelockOperation,
 	minDelay string,
 ) (*MCMSWithTimelockProposal, error) {
 	proposal := MCMSWithTimelockProposal{
-		Proposal: mcmsproposal.Proposal{
+		Proposal: mcms.Proposal{
 			Version:              version,
 			ValidUntil:           validUntil,
 			Signatures:           signatures,
@@ -135,19 +135,19 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 	return nil
 }
 
-func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcmsproposal.Proposal, error) {
+func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcms.Proposal, error) {
 	mcmOnly := m.Proposal
 
 	// Start predecessor map with all chains pointing to the zero hash
-	predecessorMap := make(map[mcmsproposal.ChainIdentifier]common.Hash)
+	predecessorMap := make(map[mcms.ChainIdentifier]common.Hash)
 	for chain := range m.ChainMetadata {
 		predecessorMap[chain] = ZERO_HASH
 	}
 
 	// Convert chain metadata
-	mcmOnly.ChainMetadata = make(map[mcmsproposal.ChainIdentifier]mcmsproposal.ChainMetadata)
+	mcmOnly.ChainMetadata = make(map[mcms.ChainIdentifier]mcms.ChainMetadata)
 	for chain, metadata := range m.ChainMetadata {
-		mcmOnly.ChainMetadata[chain] = mcmsproposal.ChainMetadata{
+		mcmOnly.ChainMetadata[chain] = mcms.ChainMetadata{
 			NonceOffset: metadata.NonceOffset,
 			MCMAddress:  metadata.MCMAddress,
 		}
@@ -171,12 +171,12 @@ func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcmsproposal.Proposal, 
 
 		abi, err := owner.RBACTimelockMetaData.GetAbi()
 		if err != nil {
-			return mcmsproposal.Proposal{}, err
+			return mcms.Proposal{}, err
 		}
 
 		operationId, err := hashOperationBatch(calls, predecessor, salt)
 		if err != nil {
-			return mcmsproposal.Proposal{}, err
+			return mcms.Proposal{}, err
 		}
 
 		// Encode the data based on the operation
@@ -185,27 +185,27 @@ func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcmsproposal.Proposal, 
 		case Schedule:
 			data, err = abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
 			if err != nil {
-				return mcmsproposal.Proposal{}, err
+				return mcms.Proposal{}, err
 			}
 		case Cancel:
 			data, err = abi.Pack("cancel", operationId)
 			if err != nil {
-				return mcmsproposal.Proposal{}, err
+				return mcms.Proposal{}, err
 			}
 		case Bypass:
 			data, err = abi.Pack("bypasserExecuteBatch", calls)
 			if err != nil {
-				return mcmsproposal.Proposal{}, err
+				return mcms.Proposal{}, err
 			}
 		default:
-			return mcmsproposal.Proposal{}, &errors.ErrInvalidTimelockOperation{
+			return mcms.Proposal{}, &errors.ErrInvalidTimelockOperation{
 				ReceivedTimelockOperation: string(m.Operation),
 			}
 		}
 
-		mcmOnly.Transactions = append(mcmOnly.Transactions, mcmsproposal.ChainOperation{
+		mcmOnly.Transactions = append(mcmOnly.Transactions, mcms.ChainOperation{
 			ChainIdentifier: t.ChainIdentifier,
-			Operation: mcmsproposal.Operation{
+			Operation: mcms.Operation{
 				To:           m.ChainMetadata[t.ChainIdentifier].TimelockAddress,
 				Data:         data,
 				Value:        big.NewInt(0), // TODO: is this right?
@@ -224,7 +224,7 @@ func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcmsproposal.Proposal, 
 // TODO: see if there's an easier way to do this using the gethwrappers
 func hashOperationBatch(calls []owner.RBACTimelockCall, predecessor, salt [32]byte) (common.Hash, error) {
 	const abi = `[{"components":[{"internalType":"address","name":"target","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"internalType":"struct Call[]","name":"calls","type":"tuple[]"},{"internalType":"bytes32","name":"predecessor","type":"bytes32"},{"internalType":"bytes32","name":"salt","type":"bytes32"}]`
-	encoded, err := mcmsproposal.ABIEncode(abi, calls, predecessor, salt)
+	encoded, err := mcms.ABIEncode(abi, calls, predecessor, salt)
 	if err != nil {
 		return common.Hash{}, err
 	}

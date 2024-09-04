@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/mcmsproposal"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/timelockproposal"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/timelock"
 )
 
-func ProposalFromFile(filePath string) (*mcmsproposal.Proposal, error) {
-	var out mcmsproposal.Proposal
+func ProposalFromFile(filePath string) (*mcms.Proposal, error) {
+	var out mcms.Proposal
 
 	// Load file from path
 	fileBytes, err := os.ReadFile(filePath)
@@ -21,8 +21,8 @@ func ProposalFromFile(filePath string) (*mcmsproposal.Proposal, error) {
 	return &out, nil
 }
 
-func TimelockProposalFromFile(filePath string) (*timelockproposal.MCMSWithTimelockProposal, error) {
-	var out timelockproposal.MCMSWithTimelockProposal
+func TimelockProposalFromFile(filePath string) (*timelock.MCMSWithTimelockProposal, error) {
+	var out timelock.MCMSWithTimelockProposal
 
 	// Load file from path
 	fileBytes, err := os.ReadFile(filePath)

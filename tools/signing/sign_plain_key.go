@@ -10,7 +10,7 @@ import (
 	// https://github.com/ethereum/go-ethereum/pull/28945
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/mcmsproposal"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
 )
 
 // Just run this locally to sign from the ledger.
@@ -23,7 +23,7 @@ func signPlainKey(privateKeyHex string) {
 		return
 	}
 
-	executor, err := proposal.ToExecutor(make(map[mcmsproposal.ChainIdentifier]mcmsproposal.ContractDeployBackend)) // TODO: pass in a real backend
+	executor, err := proposal.ToExecutor(make(map[mcms.ChainIdentifier]mcms.ContractDeployBackend)) // TODO: pass in a real backend
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,7 +47,7 @@ func signPlainKey(privateKeyHex string) {
 	}
 
 	// Sign the payload
-	unmarshalledSig := mcmsproposal.Signature{}
+	unmarshalledSig := mcms.Signature{}
 	err = json.Unmarshal(sig, &unmarshalledSig)
 	if err != nil {
 		log.Fatal(err)
