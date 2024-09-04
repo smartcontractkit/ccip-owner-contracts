@@ -124,8 +124,12 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 		}
 	}
 
-	if _, err := time.ParseDuration(m.MinDelay); err != nil {
-		return err
+	// Validate the delay is a valid duration but is only required
+	// for Schedule operations
+	if m.Operation == Schedule {
+		if _, err := time.ParseDuration(m.MinDelay); err != nil {
+			return err
+		}
 	}
 
 	return nil

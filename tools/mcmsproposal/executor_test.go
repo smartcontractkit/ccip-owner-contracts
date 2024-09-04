@@ -84,25 +84,10 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	sim.Commit()
 
 	// Wait for the transaction to be mined
-	receipt, err = bind.WaitMined(auths[0].Context, sim, tx)
+	_, err = bind.WaitMined(auths[0].Context, sim, tx)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-
-	// Check the receipt status
-	// if receipt.Status != types.ReceiptStatusSuccessful {
-	// 	// Use CallContract to get the revert reason
-	// 	_, err := sim.CallContract(auths[0].Context, ethereum.CallMsg{
-	// 		From:  auths[0].From,
-	// 		To:    tx.To(),
-	// 		Data:  tx.Data(),
-	// 		Value: tx.Value(),
-	// 	}, nil)
-	// 	if err != nil {
-	// 		return nil, nil, nil, nil, err
-	// 	}
-	// 	return nil, nil, nil, nil, errors.New("config setting failed")
-	// }
 
 	return keys, auths, sim, mcms, nil
 }

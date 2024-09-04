@@ -103,7 +103,7 @@ func TestValidate_InvalidOperation(t *testing.T) {
 	assert.IsType(t, &mcm_errors.ErrInvalidTimelockOperation{}, err)
 }
 
-func TestValidate_InvalidMinDelay(t *testing.T) {
+func TestValidate_InvalidMinDelaySchedule(t *testing.T) {
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
@@ -140,6 +140,44 @@ func TestValidate_InvalidMinDelay(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, proposal)
 	assert.Equal(t, err.Error(), "time: invalid duration \"invalid\"")
+}
+
+func TestValidate_InvalidMinDelayBypassShouldBeValid(t *testing.T) {
+	proposal, err := NewMCMSWithTimelockProposal(
+		"1.0",
+		2004259681,
+		[]mcmsproposal.Signature{},
+		false,
+		map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata{
+			TestChain1: {
+				ChainMetadata: mcmsproposal.ChainMetadata{
+					NonceOffset: 1,
+					MCMAddress:  TestAddress,
+				},
+				TimelockAddress: TestAddress,
+			},
+		},
+		"Sample description",
+		[]BatchChainOperation{
+			{
+				ChainIdentifier: TestChain1,
+				Batch: []mcmsproposal.Operation{
+					{
+						To:           TestAddress,
+						Value:        big.NewInt(0),
+						Data:         common.Hex2Bytes("0x"),
+						ContractType: "Sample contract",
+						Tags:         []string{"tag1", "tag2"},
+					},
+				},
+			},
+		},
+		Bypass,
+		"invalid",
+	)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, proposal)
 }
 
 // Constructs a simulated backend with a ManyChainMultiSig contract and a RBACTimelock contract
@@ -322,7 +360,7 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 	return keys, auths, sim, mcms, timelock, nil
 }
 
-func TestE2E_ValidScheduleAndExecuteProposal(t *testing.T) {
+func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	keys, auths, sim, mcms, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	assert.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -495,7 +533,7 @@ func TestE2E_ValidScheduleAndExecuteProposal(t *testing.T) {
 	assert.True(t, hasRole)
 }
 
-func TestE2E_ValidScheduleAndCancelProposal(t *testing.T) {
+func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	keys, auths, sim, mcms, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	assert.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -688,4 +726,661 @@ func TestE2E_ValidScheduleAndCancelProposal(t *testing.T) {
 	isOperationReady, err = timelock.IsOperationReady(&bind.CallOpts{}, operationId)
 	assert.NoError(t, err)
 	assert.False(t, isOperationReady)
+}
+
+func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
+	keys, auths, sim, mcms, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
+	assert.NoError(t, err)
+	assert.NotNil(t, keys[0])
+	assert.NotNil(t, auths[0])
+	assert.NotNil(t, sim)
+	assert.NotNil(t, mcms)
+	assert.NotNil(t, timelock)
+
+	// Construct example transaction to grant EOA the PROPOSER role
+	role, err := timelock.PROPOSERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	assert.NoError(t, err)
+	grantRoleData, err := timelockAbi.Pack("grantRole", role, auths[0].From)
+	assert.NoError(t, err)
+
+	// Validate Contract State and verify role does not exist
+	hasRole, err := timelock.HasRole(&bind.CallOpts{}, role, auths[0].From)
+	assert.NoError(t, err)
+	assert.False(t, hasRole)
+
+	// Construct example transaction
+	proposal, err := NewMCMSWithTimelockProposal(
+		"1.0",
+		2004259681,
+		[]mcmsproposal.Signature{},
+		false,
+		map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata{
+			TestChain1: {
+				ChainMetadata: mcmsproposal.ChainMetadata{
+					NonceOffset: 0,
+					MCMAddress:  mcms.Address(),
+				},
+				TimelockAddress: timelock.Address(),
+			},
+		},
+		"Sample description",
+		[]BatchChainOperation{
+			{
+				ChainIdentifier: TestChain1,
+				Batch: []mcmsproposal.Operation{
+					{
+						To:    timelock.Address(),
+						Value: big.NewInt(0),
+						Data:  grantRoleData,
+					},
+				},
+			},
+		},
+		Bypass,
+		"",
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, proposal)
+
+	// Construct mcmOnly proposal
+	mcmsProposal, err := proposal.ToMCMSOnlyProposal()
+	assert.NoError(t, err)
+	assert.NotNil(t, mcmsProposal)
+
+	// Construct executor
+	executor, err := mcmsProposal.ToExecutor(map[mcmsproposal.ChainIdentifier]mcmsproposal.ContractDeployBackend{TestChain1: sim})
+	assert.NoError(t, err)
+	assert.NotNil(t, executor)
+
+	// Get the hash to sign
+	hash, err := executor.SigningHash()
+	assert.NoError(t, err)
+
+	// Sign the hash
+	sig, err := crypto.Sign(hash.Bytes(), keys[0])
+	assert.NoError(t, err)
+
+	// Construct a signature
+	sigObj, err := mcmsproposal.NewSignatureFromBytes(sig)
+	assert.NoError(t, err)
+	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
+
+	// Validate the signatures
+	quorumMet, err := executor.ValidateSignatures()
+	assert.True(t, quorumMet)
+	assert.NoError(t, err)
+
+	// SetRoot on the contract
+	tx, err := executor.SetRootOnChain(auths[0], TestChain1)
+	assert.NoError(t, err)
+	assert.NotNil(t, tx)
+	sim.Commit()
+
+	// Validate Contract State and verify root was set
+	root, err := mcms.GetRoot(&bind.CallOpts{})
+	assert.NoError(t, err)
+	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
+	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
+
+	// Execute the proposal
+	tx, err = executor.ExecuteOnChain(auths[0], 0)
+	assert.NoError(t, err)
+	assert.NotNil(t, tx)
+	sim.Commit()
+
+	// Wait for the transaction to be mined
+	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
+	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
+
+	// Validate Contract State and verify role was granted
+	hasRole, err = timelock.HasRole(&bind.CallOpts{}, role, auths[0].From)
+	assert.NoError(t, err)
+	assert.True(t, hasRole)
+}
+
+func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
+	keys, auths, sim, mcms, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
+	assert.NoError(t, err)
+	assert.NotNil(t, keys[0])
+	assert.NotNil(t, auths[0])
+	assert.NotNil(t, sim)
+	assert.NotNil(t, mcms)
+	assert.NotNil(t, timelock)
+
+	// Construct example transactions
+	proposerRole, err := timelock.PROPOSERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	bypasserRole, err := timelock.BYPASSERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	cancellerRole, err := timelock.CANCELLERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	assert.NoError(t, err)
+
+	operations := make([]mcmsproposal.Operation, 3)
+	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole} {
+		data, err := timelockAbi.Pack("grantRole", role, auths[0].From)
+		assert.NoError(t, err)
+		operations[i] = mcmsproposal.Operation{
+			To:    timelock.Address(),
+			Value: big.NewInt(0),
+			Data:  data,
+		}
+	}
+
+	// Validate Contract State and verify role does not exist
+	hasRole, err := timelock.HasRole(&bind.CallOpts{}, proposerRole, auths[0].From)
+	assert.NoError(t, err)
+	assert.False(t, hasRole)
+	hasRole, err = timelock.HasRole(&bind.CallOpts{}, bypasserRole, auths[0].From)
+	assert.NoError(t, err)
+	assert.False(t, hasRole)
+	hasRole, err = timelock.HasRole(&bind.CallOpts{}, cancellerRole, auths[0].From)
+	assert.NoError(t, err)
+	assert.False(t, hasRole)
+
+	// Construct example transaction
+	proposal, err := NewMCMSWithTimelockProposal(
+		"1.0",
+		2004259681,
+		[]mcmsproposal.Signature{},
+		false,
+		map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata{
+			TestChain1: {
+				ChainMetadata: mcmsproposal.ChainMetadata{
+					NonceOffset: 0,
+					MCMAddress:  mcms.Address(),
+				},
+				TimelockAddress: timelock.Address(),
+			},
+		},
+		"Sample description",
+		[]BatchChainOperation{
+			{
+				ChainIdentifier: TestChain1,
+				Batch:           operations,
+			},
+		},
+		Schedule,
+		"5s",
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, proposal)
+
+	// Construct mcmOnly proposal
+	mcmsProposal, err := proposal.ToMCMSOnlyProposal()
+	assert.NoError(t, err)
+	assert.NotNil(t, mcmsProposal)
+
+	// Construct executor
+	executor, err := mcmsProposal.ToExecutor(map[mcmsproposal.ChainIdentifier]mcmsproposal.ContractDeployBackend{TestChain1: sim})
+	assert.NoError(t, err)
+	assert.NotNil(t, executor)
+
+	// Get the hash to sign
+	hash, err := executor.SigningHash()
+	assert.NoError(t, err)
+
+	// Sign the hash
+	sig, err := crypto.Sign(hash.Bytes(), keys[0])
+	assert.NoError(t, err)
+
+	// Construct a signature
+	sigObj, err := mcmsproposal.NewSignatureFromBytes(sig)
+	assert.NoError(t, err)
+	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
+
+	// Validate the signatures
+	quorumMet, err := executor.ValidateSignatures()
+	assert.True(t, quorumMet)
+	assert.NoError(t, err)
+
+	// SetRoot on the contract
+	tx, err := executor.SetRootOnChain(auths[0], TestChain1)
+	assert.NoError(t, err)
+	assert.NotNil(t, tx)
+	sim.Commit()
+
+	// Validate Contract State and verify root was set
+	root, err := mcms.GetRoot(&bind.CallOpts{})
+	assert.NoError(t, err)
+	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
+	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
+
+	// Execute the proposal
+	tx, err = executor.ExecuteOnChain(auths[0], 0)
+	assert.NoError(t, err)
+	assert.NotNil(t, tx)
+	sim.Commit()
+
+	// Wait for the transaction to be mined
+	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
+	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
+
+	// Check all the logs
+	var operationId common.Hash
+	for _, log := range receipt.Logs {
+		event, err := timelock.ParseCallScheduled(*log)
+		if err == nil {
+			operationId = event.Id
+		}
+	}
+
+	// Validate Contract State and verify operation was scheduled
+	grantRoleCalls := []owner.RBACTimelockCall{
+		{
+			Target: timelock.Address(),
+			Value:  big.NewInt(0),
+			Data:   operations[0].Data,
+		},
+		{
+			Target: timelock.Address(),
+			Value:  big.NewInt(0),
+			Data:   operations[1].Data,
+		},
+		{
+			Target: timelock.Address(),
+			Value:  big.NewInt(0),
+			Data:   operations[2].Data,
+		},
+	}
+
+	isOperation, err := timelock.IsOperation(&bind.CallOpts{}, operationId)
+	assert.NoError(t, err)
+	assert.True(t, isOperation)
+	isOperationPending, err := timelock.IsOperationPending(&bind.CallOpts{}, operationId)
+	assert.NoError(t, err)
+	assert.True(t, isOperationPending)
+	isOperationReady, err := timelock.IsOperationReady(&bind.CallOpts{}, operationId)
+	assert.NoError(t, err)
+	assert.False(t, isOperationReady)
+
+	// sleep for 5 seconds and then mine a block
+	time.Sleep(5 * time.Second)
+	sim.Commit()
+
+	// Check that the operation is now ready
+	isOperationReady, err = timelock.IsOperationReady(&bind.CallOpts{}, operationId)
+	assert.NoError(t, err)
+	assert.True(t, isOperationReady)
+
+	// Execute the operation
+	tx, err = timelock.ExecuteBatch(auths[0], grantRoleCalls, ZERO_HASH, ZERO_HASH)
+	assert.NoError(t, err)
+	assert.NotNil(t, tx)
+	sim.Commit()
+
+	// Wait for the transaction to be mined
+	receipt, err = bind.WaitMined(auths[0].Context, sim, tx)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
+	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
+
+	// Check that the operation is done
+	isOperationDone, err := timelock.IsOperationDone(&bind.CallOpts{}, operationId)
+	assert.NoError(t, err)
+	assert.True(t, isOperationDone)
+
+	// Check that the operation is no longer pending
+	isOperationPending, err = timelock.IsOperationPending(&bind.CallOpts{}, operationId)
+	assert.NoError(t, err)
+	assert.False(t, isOperationPending)
+
+	// Validate Contract State and verify role was granted
+	hasRole, err = timelock.HasRole(&bind.CallOpts{}, proposerRole, auths[0].From)
+	assert.NoError(t, err)
+	assert.True(t, hasRole)
+	hasRole, err = timelock.HasRole(&bind.CallOpts{}, bypasserRole, auths[0].From)
+	assert.NoError(t, err)
+	assert.True(t, hasRole)
+	hasRole, err = timelock.HasRole(&bind.CallOpts{}, cancellerRole, auths[0].From)
+	assert.NoError(t, err)
+	assert.True(t, hasRole)
+}
+
+func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
+	keys, auths, sim, mcms, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
+	assert.NoError(t, err)
+	assert.NotNil(t, keys[0])
+	assert.NotNil(t, auths[0])
+	assert.NotNil(t, sim)
+	assert.NotNil(t, mcms)
+	assert.NotNil(t, timelock)
+
+	// Construct example transactions
+	proposerRole, err := timelock.PROPOSERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	bypasserRole, err := timelock.BYPASSERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	cancellerRole, err := timelock.CANCELLERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	assert.NoError(t, err)
+
+	operations := make([]mcmsproposal.Operation, 3)
+	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole} {
+		data, err := timelockAbi.Pack("grantRole", role, auths[0].From)
+		assert.NoError(t, err)
+		operations[i] = mcmsproposal.Operation{
+			To:    timelock.Address(),
+			Value: big.NewInt(0),
+			Data:  data,
+		}
+	}
+
+	// Validate Contract State and verify role does not exist
+	hasRole, err := timelock.HasRole(&bind.CallOpts{}, proposerRole, auths[0].From)
+	assert.NoError(t, err)
+	assert.False(t, hasRole)
+	hasRole, err = timelock.HasRole(&bind.CallOpts{}, bypasserRole, auths[0].From)
+	assert.NoError(t, err)
+	assert.False(t, hasRole)
+	hasRole, err = timelock.HasRole(&bind.CallOpts{}, cancellerRole, auths[0].From)
+	assert.NoError(t, err)
+	assert.False(t, hasRole)
+
+	// Construct example transaction
+	proposal, err := NewMCMSWithTimelockProposal(
+		"1.0",
+		2004259681,
+		[]mcmsproposal.Signature{},
+		false,
+		map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata{
+			TestChain1: {
+				ChainMetadata: mcmsproposal.ChainMetadata{
+					NonceOffset: 0,
+					MCMAddress:  mcms.Address(),
+				},
+				TimelockAddress: timelock.Address(),
+			},
+		},
+		"Sample description",
+		[]BatchChainOperation{
+			{
+				ChainIdentifier: TestChain1,
+				Batch:           operations,
+			},
+		},
+		Schedule,
+		"5s",
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, proposal)
+
+	// Construct mcmOnly proposal
+	mcmsProposal, err := proposal.ToMCMSOnlyProposal()
+	assert.NoError(t, err)
+	assert.NotNil(t, mcmsProposal)
+
+	// Construct executor
+	executor, err := mcmsProposal.ToExecutor(map[mcmsproposal.ChainIdentifier]mcmsproposal.ContractDeployBackend{TestChain1: sim})
+	assert.NoError(t, err)
+	assert.NotNil(t, executor)
+
+	// Get the hash to sign
+	hash, err := executor.SigningHash()
+	assert.NoError(t, err)
+
+	// Sign the hash
+	sig, err := crypto.Sign(hash.Bytes(), keys[0])
+	assert.NoError(t, err)
+
+	// Construct a signature
+	sigObj, err := mcmsproposal.NewSignatureFromBytes(sig)
+	assert.NoError(t, err)
+	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
+
+	// Validate the signatures
+	quorumMet, err := executor.ValidateSignatures()
+	assert.True(t, quorumMet)
+	assert.NoError(t, err)
+
+	// SetRoot on the contract
+	tx, err := executor.SetRootOnChain(auths[0], TestChain1)
+	assert.NoError(t, err)
+	assert.NotNil(t, tx)
+	sim.Commit()
+
+	// Validate Contract State and verify root was set
+	root, err := mcms.GetRoot(&bind.CallOpts{})
+	assert.NoError(t, err)
+	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
+	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
+
+	// Execute the proposal
+	tx, err = executor.ExecuteOnChain(auths[0], 0)
+	assert.NoError(t, err)
+	assert.NotNil(t, tx)
+	sim.Commit()
+
+	// Wait for the transaction to be mined
+	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
+	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
+
+	// Check all the logs
+	var operationId common.Hash
+	for _, log := range receipt.Logs {
+		event, err := timelock.ParseCallScheduled(*log)
+		if err == nil {
+			operationId = event.Id
+		}
+	}
+
+	// Check operation state and see that it was scheduled
+	isOperation, err := timelock.IsOperation(&bind.CallOpts{}, operationId)
+	assert.NoError(t, err)
+	assert.True(t, isOperation)
+	isOperationPending, err := timelock.IsOperationPending(&bind.CallOpts{}, operationId)
+	assert.NoError(t, err)
+	assert.True(t, isOperationPending)
+	isOperationReady, err := timelock.IsOperationReady(&bind.CallOpts{}, operationId)
+	assert.NoError(t, err)
+	assert.False(t, isOperationReady)
+
+	// Generate a new proposal to cancel the operation
+	proposal.Operation = Cancel
+
+	// Construct mcmOnly proposal
+	mcmsProposal, err = proposal.ToMCMSOnlyProposal()
+	assert.NoError(t, err)
+	assert.NotNil(t, mcmsProposal)
+
+	// Construct executor
+	executor, err = mcmsProposal.ToExecutor(map[mcmsproposal.ChainIdentifier]mcmsproposal.ContractDeployBackend{TestChain1: sim})
+	assert.NoError(t, err)
+	assert.NotNil(t, executor)
+
+	// Get the hash to sign
+	hash, err = executor.SigningHash()
+	assert.NoError(t, err)
+
+	// Sign the hash
+	sig, err = crypto.Sign(hash.Bytes(), keys[0])
+	assert.NoError(t, err)
+
+	// Construct a signature
+	sigObj, err = mcmsproposal.NewSignatureFromBytes(sig)
+	assert.NoError(t, err)
+	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
+
+	// Validate the signatures
+	quorumMet, err = executor.ValidateSignatures()
+	assert.True(t, quorumMet)
+	assert.NoError(t, err)
+
+	// SetRoot on the contract
+	tx, err = executor.SetRootOnChain(auths[0], TestChain1)
+	assert.NoError(t, err)
+	assert.NotNil(t, tx)
+	sim.Commit()
+
+	// Validate Contract State and verify root was set
+	root, err = mcms.GetRoot(&bind.CallOpts{})
+	assert.NoError(t, err)
+	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
+	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
+
+	// Execute the proposal
+	tx, err = executor.ExecuteOnChain(auths[0], 0)
+	assert.NoError(t, err)
+	assert.NotNil(t, tx)
+	sim.Commit()
+
+	// Wait for the transaction to be mined
+	receipt, err = bind.WaitMined(auths[0].Context, sim, tx)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
+	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
+
+	// Verify operation state and confirm it was cancelled
+	isOperation, err = timelock.IsOperation(&bind.CallOpts{}, operationId)
+	assert.NoError(t, err)
+	assert.False(t, isOperation)
+	isOperationPending, err = timelock.IsOperationPending(&bind.CallOpts{}, operationId)
+	assert.NoError(t, err)
+	assert.False(t, isOperationPending)
+	isOperationReady, err = timelock.IsOperationReady(&bind.CallOpts{}, operationId)
+	assert.NoError(t, err)
+	assert.False(t, isOperationReady)
+}
+
+func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
+	keys, auths, sim, mcms, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
+	assert.NoError(t, err)
+	assert.NotNil(t, keys[0])
+	assert.NotNil(t, auths[0])
+	assert.NotNil(t, sim)
+	assert.NotNil(t, mcms)
+	assert.NotNil(t, timelock)
+
+	// Construct example transactions
+	proposerRole, err := timelock.PROPOSERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	bypasserRole, err := timelock.BYPASSERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	cancellerRole, err := timelock.CANCELLERROLE(&bind.CallOpts{})
+	assert.NoError(t, err)
+	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	assert.NoError(t, err)
+
+	operations := make([]mcmsproposal.Operation, 3)
+	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole} {
+		data, err := timelockAbi.Pack("grantRole", role, auths[0].From)
+		assert.NoError(t, err)
+		operations[i] = mcmsproposal.Operation{
+			To:    timelock.Address(),
+			Value: big.NewInt(0),
+			Data:  data,
+		}
+	}
+
+	// Validate Contract State and verify role does not exist
+	hasRole, err := timelock.HasRole(&bind.CallOpts{}, proposerRole, auths[0].From)
+	assert.NoError(t, err)
+	assert.False(t, hasRole)
+	hasRole, err = timelock.HasRole(&bind.CallOpts{}, bypasserRole, auths[0].From)
+	assert.NoError(t, err)
+	assert.False(t, hasRole)
+	hasRole, err = timelock.HasRole(&bind.CallOpts{}, cancellerRole, auths[0].From)
+	assert.NoError(t, err)
+	assert.False(t, hasRole)
+
+	// Construct example transaction
+	proposal, err := NewMCMSWithTimelockProposal(
+		"1.0",
+		2004259681,
+		[]mcmsproposal.Signature{},
+		false,
+		map[mcmsproposal.ChainIdentifier]MCMSWithTimelockChainMetadata{
+			TestChain1: {
+				ChainMetadata: mcmsproposal.ChainMetadata{
+					NonceOffset: 0,
+					MCMAddress:  mcms.Address(),
+				},
+				TimelockAddress: timelock.Address(),
+			},
+		},
+		"Sample description",
+		[]BatchChainOperation{
+			{
+				ChainIdentifier: TestChain1,
+				Batch:           operations,
+			},
+		},
+		Bypass,
+		"",
+	)
+	assert.NoError(t, err)
+	assert.NotNil(t, proposal)
+
+	// Construct mcmOnly proposal
+	mcmsProposal, err := proposal.ToMCMSOnlyProposal()
+	assert.NoError(t, err)
+	assert.NotNil(t, mcmsProposal)
+
+	// Construct executor
+	executor, err := mcmsProposal.ToExecutor(map[mcmsproposal.ChainIdentifier]mcmsproposal.ContractDeployBackend{TestChain1: sim})
+	assert.NoError(t, err)
+	assert.NotNil(t, executor)
+
+	// Get the hash to sign
+	hash, err := executor.SigningHash()
+	assert.NoError(t, err)
+
+	// Sign the hash
+	sig, err := crypto.Sign(hash.Bytes(), keys[0])
+	assert.NoError(t, err)
+
+	// Construct a signature
+	sigObj, err := mcmsproposal.NewSignatureFromBytes(sig)
+	assert.NoError(t, err)
+	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
+
+	// Validate the signatures
+	quorumMet, err := executor.ValidateSignatures()
+	assert.True(t, quorumMet)
+	assert.NoError(t, err)
+
+	// SetRoot on the contract
+	tx, err := executor.SetRootOnChain(auths[0], TestChain1)
+	assert.NoError(t, err)
+	assert.NotNil(t, tx)
+	sim.Commit()
+
+	// Validate Contract State and verify root was set
+	root, err := mcms.GetRoot(&bind.CallOpts{})
+	assert.NoError(t, err)
+	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
+	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
+
+	// Execute the proposal
+	tx, err = executor.ExecuteOnChain(auths[0], 0)
+	assert.NoError(t, err)
+	assert.NotNil(t, tx)
+	sim.Commit()
+
+	// Wait for the transaction to be mined
+	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
+	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
+
+	// Validate Contract State and verify role was granted
+	hasRole, err = timelock.HasRole(&bind.CallOpts{}, proposerRole, auths[0].From)
+	assert.NoError(t, err)
+	assert.True(t, hasRole)
+	hasRole, err = timelock.HasRole(&bind.CallOpts{}, bypasserRole, auths[0].From)
+	assert.NoError(t, err)
+	assert.True(t, hasRole)
+	hasRole, err = timelock.HasRole(&bind.CallOpts{}, cancellerRole, auths[0].From)
+	assert.NoError(t, err)
+	assert.True(t, hasRole)
 }
