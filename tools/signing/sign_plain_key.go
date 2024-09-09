@@ -1,6 +1,7 @@
 package signing
 
 import (
+	"crypto/ecdsa"
 	"os"
 
 	// NOTE MUST BE > 1.14 for this fix
@@ -12,9 +13,9 @@ import (
 )
 
 // Just run this locally to sign from the ledger.
-func SignPlainKey(privateKeyHex string, filePath string, proposalType proposal.ProposalType) error {
+func SignPlainKey(privateKey *ecdsa.PrivateKey, filePath string, proposalType proposal.ProposalType) error {
 	// Load file
-	proposal, err := LoadProposal(proposalType, os.Args[0])
+	proposal, err := LoadProposal(proposalType, filePath)
 	if err != nil {
 		return err
 	}
@@ -37,12 +38,6 @@ func SignPlainKey(privateKeyHex string, filePath string, proposalType proposal.P
 		return err
 	}
 
-	// Load private key
-	privateKey, err := crypto.HexToECDSA(privateKeyHex)
-	if err != nil {
-		return err
-	}
-
 	// Sign the payload
 	sig, err := crypto.Sign(payload.Bytes(), privateKey)
 	if err != nil {
@@ -60,6 +55,5 @@ func SignPlainKey(privateKeyHex string, filePath string, proposalType proposal.P
 
 	// Write proposal to file
 	WriteProposalToFile(proposal, os.Args[0])
-
 	return nil
 }
