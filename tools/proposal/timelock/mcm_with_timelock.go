@@ -135,7 +135,17 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 	return nil
 }
 
-func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcms.Proposal, error) {
+func (m *MCMSWithTimelockProposal) ToExecutor(clients map[mcms.ChainIdentifier]mcms.ContractDeployBackend) (*mcms.Executor, error) {
+	// Convert the proposal to an MCMS only proposal
+	mcmOnly, err := m.toMCMSOnlyProposal()
+	if err != nil {
+		return nil, err
+	}
+
+	return mcmOnly.ToExecutor(clients)
+}
+
+func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.Proposal, error) {
 	mcmOnly := m.Proposal
 
 	// Start predecessor map with all chains pointing to the zero hash
