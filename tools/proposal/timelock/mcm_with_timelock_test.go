@@ -31,14 +31,14 @@ func TestValidate_ValidProposal(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 1,
-					MCMAddress:  TestAddress,
-				},
-				TimelockAddress: TestAddress,
+				NonceOffset: 1,
+				MCMAddress:  TestAddress,
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: TestAddress,
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -69,14 +69,14 @@ func TestValidate_InvalidOperation(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 1,
-					MCMAddress:  TestAddress,
-				},
-				TimelockAddress: TestAddress,
+				NonceOffset: 1,
+				MCMAddress:  TestAddress,
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: TestAddress,
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -108,14 +108,14 @@ func TestValidate_InvalidMinDelaySchedule(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 1,
-					MCMAddress:  TestAddress,
-				},
-				TimelockAddress: TestAddress,
+				NonceOffset: 1,
+				MCMAddress:  TestAddress,
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: TestAddress,
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -147,14 +147,14 @@ func TestValidate_InvalidMinDelayBypassShouldBeValid(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 1,
-					MCMAddress:  TestAddress,
-				},
-				TimelockAddress: TestAddress,
+				NonceOffset: 1,
+				MCMAddress:  TestAddress,
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: TestAddress,
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -387,14 +387,14 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 0,
-					MCMAddress:  mcmsObj.Address(),
-				},
-				TimelockAddress: timelock.Address(),
+				NonceOffset: 0,
+				MCMAddress:  mcmsObj.Address(),
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: timelock.Address(),
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -415,13 +415,8 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, proposal)
 
-	// Construct mcmOnly proposal
-	mcmsProposal, err := proposal.ToMCMSOnlyProposal()
-	assert.NoError(t, err)
-	assert.NotNil(t, mcmsProposal)
-
 	// Construct executor
-	executor, err := mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
+	executor, err := proposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -560,14 +555,14 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 0,
-					MCMAddress:  mcmsObj.Address(),
-				},
-				TimelockAddress: timelock.Address(),
+				NonceOffset: 0,
+				MCMAddress:  mcmsObj.Address(),
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: timelock.Address(),
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -588,13 +583,8 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, proposal)
 
-	// Construct mcmOnly proposal
-	mcmsProposal, err := proposal.ToMCMSOnlyProposal()
-	assert.NoError(t, err)
-	assert.NotNil(t, mcmsProposal)
-
 	// Construct executor
-	executor, err := mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
+	executor, err := proposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -663,13 +653,8 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	// Generate a new proposal to cancel the operation
 	proposal.Operation = Cancel
 
-	// Construct mcmOnly proposal
-	mcmsProposal, err = proposal.ToMCMSOnlyProposal()
-	assert.NoError(t, err)
-	assert.NotNil(t, mcmsProposal)
-
 	// Construct executor
-	executor, err = mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
+	executor, err = proposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -755,14 +740,14 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 0,
-					MCMAddress:  mcmsObj.Address(),
-				},
-				TimelockAddress: timelock.Address(),
+				NonceOffset: 0,
+				MCMAddress:  mcmsObj.Address(),
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: timelock.Address(),
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -783,13 +768,8 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, proposal)
 
-	// Construct mcmOnly proposal
-	mcmsProposal, err := proposal.ToMCMSOnlyProposal()
-	assert.NoError(t, err)
-	assert.NotNil(t, mcmsProposal)
-
 	// Construct executor
-	executor, err := mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
+	executor, err := proposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -888,14 +868,14 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 0,
-					MCMAddress:  mcmsObj.Address(),
-				},
-				TimelockAddress: timelock.Address(),
+				NonceOffset: 0,
+				MCMAddress:  mcmsObj.Address(),
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: timelock.Address(),
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -910,13 +890,8 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, proposal)
 
-	// Construct mcmOnly proposal
-	mcmsProposal, err := proposal.ToMCMSOnlyProposal()
-	assert.NoError(t, err)
-	assert.NotNil(t, mcmsProposal)
-
 	// Construct executor
-	executor, err := mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
+	executor, err := proposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -1090,14 +1065,14 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 0,
-					MCMAddress:  mcmsObj.Address(),
-				},
-				TimelockAddress: timelock.Address(),
+				NonceOffset: 0,
+				MCMAddress:  mcmsObj.Address(),
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: timelock.Address(),
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -1112,13 +1087,8 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, proposal)
 
-	// Construct mcmOnly proposal
-	mcmsProposal, err := proposal.ToMCMSOnlyProposal()
-	assert.NoError(t, err)
-	assert.NotNil(t, mcmsProposal)
-
 	// Construct executor
-	executor, err := mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
+	executor, err := proposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -1187,13 +1157,8 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	// Generate a new proposal to cancel the operation
 	proposal.Operation = Cancel
 
-	// Construct mcmOnly proposal
-	mcmsProposal, err = proposal.ToMCMSOnlyProposal()
-	assert.NoError(t, err)
-	assert.NotNil(t, mcmsProposal)
-
 	// Construct executor
-	executor, err = mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
+	executor, err = proposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -1298,14 +1263,14 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 0,
-					MCMAddress:  mcmsObj.Address(),
-				},
-				TimelockAddress: timelock.Address(),
+				NonceOffset: 0,
+				MCMAddress:  mcmsObj.Address(),
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: timelock.Address(),
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -1320,13 +1285,8 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, proposal)
 
-	// Construct mcmOnly proposal
-	mcmsProposal, err := proposal.ToMCMSOnlyProposal()
-	assert.NoError(t, err)
-	assert.NotNil(t, mcmsProposal)
-
 	// Construct executor
-	executor, err := mcmsProposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
+	executor, err := proposal.ToExecutor(map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim})
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
