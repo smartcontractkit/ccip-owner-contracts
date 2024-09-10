@@ -1,33 +1,28 @@
 package signing
 
 import (
-	"encoding/json"
-	"fmt"
-	"log"
 	"os"
 
 	// NOTE MUST BE > 1.14 for this fix
 	// https://github.com/ethereum/go-ethereum/pull/28945
 
 	"github.com/ethereum/go-ethereum/accounts/usbwallet"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/executable"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/managed"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
 )
 
 // Just run this locally to sign from the ledger.
-func signLedger() {
+func SignLedger(derivationPath []uint32, filePath string, proposalType proposal.ProposalType) error {
 	// Load file
-	proposal, _ := ProposalFromFile(managed.MCMSProposalTypeMap[os.Args[0]], os.Args[1])
-	err := proposal.Validate()
+	proposal, err := LoadProposal(proposalType, filePath)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 
-	executableProposal, err := proposal.ToExecutableMCMSProposal()
+	// Validate proposal
+	err = proposal.Validate()
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 
 	// Load ledger
@@ -35,46 +30,52 @@ func signLedger() {
 	wallets := ledgerhub.Wallets()
 	wallet := wallets[0]
 
+	// Create executor
+	executor, err := proposal.ToExecutor(make(map[mcms.ChainIdentifier]mcms.ContractDeployBackend)) // TODO: pass in a real backend
+	if err != nil {
+		return err
+	}
+
 	// Open the ledger.
 	_ = wallet.Open("")
 
 	// Load account.
 	// BIP44 derivation path used in ledger.
 	// Could pass this in as an argument as well.
-	var derivationPath = []uint32{
-		44 | 0x80000000,
-		60 | 0x80000000,
-		0 | 0x80000000,
-		0,
-		uint32(0), // Account 0
-	}
-	account, _ := wallet.Derive(derivationPath, true)
-
-	executor, err := executableProposal.ToExecutor(make(map[string]executable.ContractDeployBackend)) // TODO: pass in a real backend
+	account, err := wallet.Derive(derivationPath, true)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// Get the signing hash
 	payload, err := executor.SigningHash()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// Sign the payload
-	sig, _ := wallet.SignData(account, "", payload.Bytes())
-	unmarshalledSig := executable.Signature{}
-	err = json.Unmarshal(sig, &unmarshalledSig)
+	sig, err := wallet.SignData(account, "", payload.Bytes())
 	if err != nil {
-		log.Fatal(err)
+		return err
+	}
+
+	// Unmarshal signature
+	sigObj, err := mcms.NewSignatureFromBytes(sig)
+	if err != nil {
+		return err
 	}
 
 	// Add signature to proposal
-	proposal.AddSignature(unmarshalledSig)
+	proposal.AddSignature(sigObj)
 
 	// Write proposal to file
 	WriteProposalToFile(proposal, os.Args[0])
 
 	// Close wallet
-	_ = wallet.Close()
+	err = wallet.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

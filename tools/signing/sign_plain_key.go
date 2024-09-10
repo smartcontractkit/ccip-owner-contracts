@@ -44,7 +44,7 @@ func SignPlainKey(privateKey *ecdsa.PrivateKey, filePath string, proposalType pr
 		return err
 	}
 
-	// Sign the payload
+	// Unmarshal signature
 	sigObj, err := mcms.NewSignatureFromBytes(sig)
 	if err != nil {
 		return err
