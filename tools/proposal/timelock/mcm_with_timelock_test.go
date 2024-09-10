@@ -31,14 +31,14 @@ func TestValidate_ValidProposal(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 1,
-					MCMAddress:  TestAddress,
-				},
-				TimelockAddress: TestAddress,
+				NonceOffset: 1,
+				MCMAddress:  TestAddress,
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: TestAddress,
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -69,14 +69,14 @@ func TestValidate_InvalidOperation(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 1,
-					MCMAddress:  TestAddress,
-				},
-				TimelockAddress: TestAddress,
+				NonceOffset: 1,
+				MCMAddress:  TestAddress,
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: TestAddress,
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -108,14 +108,14 @@ func TestValidate_InvalidMinDelaySchedule(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 1,
-					MCMAddress:  TestAddress,
-				},
-				TimelockAddress: TestAddress,
+				NonceOffset: 1,
+				MCMAddress:  TestAddress,
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: TestAddress,
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -147,14 +147,14 @@ func TestValidate_InvalidMinDelayBypassShouldBeValid(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 1,
-					MCMAddress:  TestAddress,
-				},
-				TimelockAddress: TestAddress,
+				NonceOffset: 1,
+				MCMAddress:  TestAddress,
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: TestAddress,
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -387,14 +387,14 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 0,
-					MCMAddress:  mcmsObj.Address(),
-				},
-				TimelockAddress: timelock.Address(),
+				NonceOffset: 0,
+				MCMAddress:  mcmsObj.Address(),
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: timelock.Address(),
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -555,14 +555,14 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 0,
-					MCMAddress:  mcmsObj.Address(),
-				},
-				TimelockAddress: timelock.Address(),
+				NonceOffset: 0,
+				MCMAddress:  mcmsObj.Address(),
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: timelock.Address(),
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -740,14 +740,14 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 0,
-					MCMAddress:  mcmsObj.Address(),
-				},
-				TimelockAddress: timelock.Address(),
+				NonceOffset: 0,
+				MCMAddress:  mcmsObj.Address(),
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: timelock.Address(),
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -868,14 +868,14 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 0,
-					MCMAddress:  mcmsObj.Address(),
-				},
-				TimelockAddress: timelock.Address(),
+				NonceOffset: 0,
+				MCMAddress:  mcmsObj.Address(),
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: timelock.Address(),
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -1065,14 +1065,14 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 0,
-					MCMAddress:  mcmsObj.Address(),
-				},
-				TimelockAddress: timelock.Address(),
+				NonceOffset: 0,
+				MCMAddress:  mcmsObj.Address(),
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: timelock.Address(),
 		},
 		"Sample description",
 		[]BatchChainOperation{
@@ -1263,14 +1263,14 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata{
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				ChainMetadata: mcms.ChainMetadata{
-					NonceOffset: 0,
-					MCMAddress:  mcmsObj.Address(),
-				},
-				TimelockAddress: timelock.Address(),
+				NonceOffset: 0,
+				MCMAddress:  mcmsObj.Address(),
 			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: timelock.Address(),
 		},
 		"Sample description",
 		[]BatchChainOperation{
