@@ -51,7 +51,7 @@ func SignPlainKey(privateKey *ecdsa.PrivateKey, filePath string, proposalType pr
 	}
 
 	// Add signature to proposal
-	proposal.Signatures = append(proposal.Signatures, sigObj)
+	proposal.AddSignature(sigObj)
 
 	// Write proposal to file
 	WriteProposalToFile(proposal, os.Args[0])

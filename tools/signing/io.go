@@ -10,30 +10,20 @@ import (
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/timelock"
 )
 
-func LoadProposal(proposalType proposal.ProposalType, filePath string) (*mcms.Proposal, error) {
+func LoadProposal(proposalType proposal.ProposalType, filePath string) (proposal.Proposal, error) {
 	switch proposalType {
 	case proposal.MCMS:
 		return ProposalFromFile(filePath)
 	case proposal.MCMSWithTimelock:
-		proposal, err := TimelockProposalFromFile(filePath)
-		if err != nil {
-			return nil, err
-		}
-
-		mcmsOnlyProposal, err := proposal.ToMCMSOnlyProposal()
-		if err != nil {
-			return nil, err
-		}
-
-		return &mcmsOnlyProposal, nil
+		return TimelockProposalFromFile(filePath)
 	default:
 		return nil, errors.New("unknown proposal type")
 	}
 }
 
-// Usage for mcms.Proposal
-func ProposalFromFile(filePath string) (*mcms.Proposal, error) {
-	var out mcms.Proposal
+// Usage for mcms.MCMSProposal
+func ProposalFromFile(filePath string) (*mcms.MCMSProposal, error) {
+	var out mcms.MCMSProposal
 	err := FromFile(filePath, &out)
 	if err != nil {
 		return nil, err

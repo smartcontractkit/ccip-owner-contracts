@@ -1,5 +1,7 @@
 package proposal
 
+import "github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
+
 type ProposalType string
 
 const (
@@ -12,4 +14,10 @@ const (
 var StringToProposalType = map[string]ProposalType{
 	"MCMS":             MCMS,
 	"MCMSWithTimelock": MCMSWithTimelock,
+}
+
+type Proposal interface {
+	ToExecutor(clients map[mcms.ChainIdentifier]mcms.ContractDeployBackend) (*mcms.Executor, error)
+	AddSignature(signature mcms.Signature)
+	Validate() error
 }

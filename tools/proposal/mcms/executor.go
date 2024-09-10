@@ -16,7 +16,7 @@ import (
 )
 
 type Executor struct {
-	Proposal         *Proposal
+	Proposal         *MCMSProposal
 	Tree             *merkle.MerkleTree
 	RootMetadatas    map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata
 	Operations       map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp
@@ -24,7 +24,7 @@ type Executor struct {
 	Callers          map[ChainIdentifier]*gethwrappers.ManyChainMultiSig
 }
 
-func NewProposalExecutor(proposal *Proposal, clients map[ChainIdentifier]ContractDeployBackend) (*Executor, error) {
+func NewProposalExecutor(proposal *MCMSProposal, clients map[ChainIdentifier]ContractDeployBackend) (*Executor, error) {
 	txCounts := calculateTransactionCounts(proposal.Transactions)
 	mcms := transformMCMAddresses(proposal.ChainMetadata)
 

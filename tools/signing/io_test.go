@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/timelock"
 	"github.com/stretchr/testify/assert"
@@ -44,7 +45,7 @@ func TestFromFile(t *testing.T) {
 }
 
 func TestProposalFromFile(t *testing.T) {
-	mcmsProposal := mcms.Proposal{
+	mcmsProposal := mcms.MCMSProposal{
 		Version:              "1",
 		ValidUntil:           100,
 		Signatures:           []mcms.Signature{},
@@ -69,17 +70,18 @@ func TestProposalFromFile(t *testing.T) {
 
 func TestTimelockProposalFromFile(t *testing.T) {
 	mcmsProposal := timelock.MCMSWithTimelockProposal{
-		Proposal: mcms.Proposal{
+		MCMSProposal: mcms.MCMSProposal{
 			Version:              "1",
 			ValidUntil:           100,
 			Signatures:           []mcms.Signature{},
 			OverridePreviousRoot: false,
 			Description:          "Test Proposal",
+			ChainMetadata:        make(map[mcms.ChainIdentifier]mcms.ChainMetadata),
 		},
-		ChainMetadata: make(map[mcms.ChainIdentifier]timelock.MCMSWithTimelockChainMetadata),
-		Transactions:  make([]timelock.BatchChainOperation, 0),
-		Operation:     timelock.Schedule,
-		MinDelay:      "1h",
+		TimelockAddresses: make(map[mcms.ChainIdentifier]common.Address),
+		Transactions:      make([]timelock.BatchChainOperation, 0),
+		Operation:         timelock.Schedule,
+		MinDelay:          "1h",
 	}
 
 	tempFile, err := os.CreateTemp("", "timelock.json")
