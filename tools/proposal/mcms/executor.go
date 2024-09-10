@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -29,6 +30,7 @@ func NewProposalExecutor(proposal *Proposal, clients map[ChainIdentifier]Contrac
 	mcms := transformMCMAddresses(proposal.ChainMetadata)
 
 	mcmsWrappers := make(map[ChainIdentifier]*gethwrappers.ManyChainMultiSig)
+	sim := false
 	for chain, mcmAddress := range mcms {
 		client, ok := clients[chain]
 		if !ok {
@@ -36,6 +38,7 @@ func NewProposalExecutor(proposal *Proposal, clients map[ChainIdentifier]Contrac
 				ChainIdentifier: uint64(chain),
 			}
 		}
+		_, sim = client.(*backends.SimulatedBackend)
 
 		mcms, err := gethwrappers.NewManyChainMultiSig(mcmAddress, client)
 		if err != nil {
@@ -55,7 +58,7 @@ func NewProposalExecutor(proposal *Proposal, clients map[ChainIdentifier]Contrac
 		return nil, err
 	}
 
-	rootMetadatas, err := buildRootMetadatas(proposal.ChainMetadata, txCounts, currentOpCounts, proposal.OverridePreviousRoot)
+	rootMetadatas, err := buildRootMetadatas(proposal.ChainMetadata, txCounts, currentOpCounts, proposal.OverridePreviousRoot, sim)
 	if err != nil {
 		return nil, err
 	}

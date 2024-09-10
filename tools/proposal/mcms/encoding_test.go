@@ -57,7 +57,7 @@ func TestBuildRootMetadatas_Success(t *testing.T) {
 		},
 	}
 
-	result, err := buildRootMetadatas(chainMetadata, txCounts, currentOpCounts, true)
+	result, err := buildRootMetadatas(chainMetadata, txCounts, currentOpCounts, true, false)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
@@ -73,7 +73,7 @@ func TestBuildRootMetadatas_InvalidChainID(t *testing.T) {
 		0: *big.NewInt(0),
 	}
 
-	result, err := buildRootMetadatas(chainMetadata, txCounts, currentOpCounts, true)
+	result, err := buildRootMetadatas(chainMetadata, txCounts, currentOpCounts, true, false)
 	assert.Error(t, err)
 	assert.Nil(t, result)
 	assert.IsType(t, &errors.ErrInvalidChainID{}, err)

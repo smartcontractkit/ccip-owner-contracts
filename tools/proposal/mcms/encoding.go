@@ -28,6 +28,7 @@ func buildRootMetadatas(
 	txCounts map[ChainIdentifier]uint64,
 	currentOpCounts map[ChainIdentifier]big.Int,
 	overridePreviousRoot bool,
+	isSim bool,
 ) (map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata, error) {
 	rootMetadatas := make(map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata)
 
@@ -55,6 +56,12 @@ func buildRootMetadatas(
 			}
 		}
 
+		// Simulated chains always have block.chainid = 1337
+		// So for setRoot to execute (not throw WrongChainId) we must
+		// override the evmChainID to be 1337.
+		if isSim {
+			chain.EvmChainID = 1337
+		}
 		rootMetadatas[chainID] = gethwrappers.ManyChainMultiSigRootMetadata{
 			ChainId:              new(big.Int).SetUint64(chain.EvmChainID),
 			MultiSig:             metadata.MCMAddress,
