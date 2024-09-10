@@ -26,7 +26,12 @@ func SignLedger(derivationPath []uint32, filePath string, proposalType proposal.
 	}
 
 	// Load ledger
-	ledgerhub, _ := usbwallet.NewLedgerHub()
+	ledgerhub, err := usbwallet.NewLedgerHub()
+	if err != nil {
+		return err
+	}
+
+	// Get the first wallet
 	wallets := ledgerhub.Wallets()
 	wallet := wallets[0]
 
