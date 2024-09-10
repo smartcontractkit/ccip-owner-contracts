@@ -9,7 +9,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Go
       uses: actions/setup-go@v4
@@ -28,6 +28,18 @@ jobs:
 
     - name: Install dependencies
       run: go mod tidy
+
+    - name: Check for git diff after go mod tidy
+      run: |
+        git diff --exit-code --color
+      if: ${{ always() }}
+      continue-on-error: true
+
+    - name: Fail if there are uncommitted changes
+      run: |
+        echo "Uncommitted changes found after 'go mod tidy'. Please commit changes."
+        exit 1
+      if: ${{ failure() }}
 
     - name: Build the project
       run: go build ./...

@@ -4,26 +4,48 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/managed"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/timelock"
 )
 
-func ProposalFromFile(proposalType managed.MCMSProposalType, filePath string) (managed.MCMSProposal, error) {
-	var out managed.MCMSProposal
-	switch proposalType {
-	case managed.MCMSOnly:
-		out = &managed.MCMSOnlyProposal{}
-	case managed.MCMSWithTimelock:
-		out = &managed.MCMSWithTimelockProposal{}
-	default:
-		return nil, &errors.ErrInvalidProposalType{ReceivedProposalType: string(proposalType)}
+// Generic function to read a file and unmarshal its contents into the provided struct
+func FromFile(filePath string, out interface{}) error {
+	// Load file from path
+	fileBytes, err := os.ReadFile(filePath)
+	if err != nil {
+		return err
 	}
 
-	json.Unmarshal([]byte(filePath), out)
-	return out, nil
+	// Unmarshal JSON into the provided struct
+	err = json.Unmarshal(fileBytes, out)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func WriteProposalToFile(proposal managed.MCMSProposal, filePath string) error {
+// Usage for mcms.Proposal
+func ProposalFromFile(filePath string) (*mcms.Proposal, error) {
+	var out mcms.Proposal
+	err := FromFile(filePath, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Usage for timelock.MCMSWithTimelockProposal
+func TimelockProposalFromFile(filePath string) (*timelock.MCMSWithTimelockProposal, error) {
+	var out timelock.MCMSWithTimelockProposal
+	err := FromFile(filePath, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func WriteProposalToFile(proposal interface{}, filePath string) error {
 	proposalBytes, err := json.Marshal(proposal)
 	if err != nil {
 		return err

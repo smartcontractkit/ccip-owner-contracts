@@ -10,27 +10,20 @@ import (
 	// https://github.com/ethereum/go-ethereum/pull/28945
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/executable"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/managed"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
 )
 
 // Just run this locally to sign from the ledger.
 func signPlainKey(privateKeyHex string) {
 	// Load file
-	proposal, _ := ProposalFromFile(managed.MCMSProposalTypeMap[os.Args[0]], os.Args[1])
+	proposal, _ := ProposalFromFile(os.Args[0])
 	err := proposal.Validate()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	executableProposal, err := proposal.ToExecutableMCMSProposal()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	executor, err := executableProposal.ToExecutor(make(map[string]executable.ContractDeployBackend)) // TODO: pass in a real backend
+	executor, err := proposal.ToExecutor(make(map[mcms.ChainIdentifier]mcms.ContractDeployBackend)) // TODO: pass in a real backend
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,14 +47,14 @@ func signPlainKey(privateKeyHex string) {
 	}
 
 	// Sign the payload
-	unmarshalledSig := executable.Signature{}
+	unmarshalledSig := mcms.Signature{}
 	err = json.Unmarshal(sig, &unmarshalledSig)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Add signature to proposal
-	proposal.AddSignature(unmarshalledSig)
+	proposal.Signatures = append(proposal.Signatures, unmarshalledSig)
 
 	// Write proposal to file
 	WriteProposalToFile(proposal, os.Args[0])

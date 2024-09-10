@@ -1,21 +1,22 @@
-package executable
+package mcms
 
 import (
 	"math/big"
 	"sort"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/merkle"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 )
 
 var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP"))
 var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA"))
 
-func calculateTransactionCounts(transactions []ChainOperation) map[string]uint64 {
-	txCounts := make(map[string]uint64)
+func calculateTransactionCounts(transactions []ChainOperation) map[ChainIdentifier]uint64 {
+	txCounts := make(map[ChainIdentifier]uint64)
 	for _, tx := range transactions {
 		txCounts[tx.ChainIdentifier]++
 	}
@@ -23,25 +24,25 @@ func calculateTransactionCounts(transactions []ChainOperation) map[string]uint64
 }
 
 func buildRootMetadatas(
-	chainMetadata map[string]ExecutableMCMSChainMetadata,
-	txCounts map[string]uint64,
-	currentOpCounts map[string]big.Int,
+	chainMetadata map[ChainIdentifier]ChainMetadata,
+	txCounts map[ChainIdentifier]uint64,
+	currentOpCounts map[ChainIdentifier]big.Int,
 	overridePreviousRoot bool,
-) (map[string]gethwrappers.ManyChainMultiSigRootMetadata, error) {
-	rootMetadatas := make(map[string]gethwrappers.ManyChainMultiSigRootMetadata)
+) (map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata, error) {
+	rootMetadatas := make(map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata)
 
 	for chainID, metadata := range chainMetadata {
-		stringChainId, err := big.NewInt(0).SetString(chainID, 10)
-		if !err {
+		chain, exists := chain_selectors.ChainBySelector(uint64(chainID))
+		if !exists {
 			return nil, &errors.ErrInvalidChainID{
-				ReceivedChainID: chainID,
+				ReceivedChainID: uint64(chainID),
 			}
 		}
 
 		currentNonce, ok := currentOpCounts[chainID]
 		if !ok {
 			return nil, &errors.ErrMissingChainDetails{
-				ChainIdentifier: chainID,
+				ChainIdentifier: uint64(chainID),
 				Parameter:       "current op count",
 			}
 		}
@@ -49,13 +50,13 @@ func buildRootMetadatas(
 		currentTxCount, ok := txCounts[chainID]
 		if !ok {
 			return nil, &errors.ErrMissingChainDetails{
-				ChainIdentifier: chainID,
+				ChainIdentifier: uint64(chainID),
 				Parameter:       "transaction count",
 			}
 		}
 
 		rootMetadatas[chainID] = gethwrappers.ManyChainMultiSigRootMetadata{
-			ChainId:              stringChainId,
+			ChainId:              new(big.Int).SetUint64(chain.EvmChainID),
 			MultiSig:             metadata.MCMAddress,
 			PreOpCount:           big.NewInt(currentNonce.Int64() + int64(metadata.NonceOffset)),                         // TODO: handle overflow
 			PostOpCount:          big.NewInt(currentNonce.Int64() + int64(metadata.NonceOffset) + int64(currentTxCount)), // TODO: handle overflow
@@ -67,12 +68,12 @@ func buildRootMetadatas(
 
 func buildOperations(
 	transactions []ChainOperation,
-	rootMetadatas map[string]gethwrappers.ManyChainMultiSigRootMetadata,
-	txCounts map[string]uint64,
-) (map[string][]gethwrappers.ManyChainMultiSigOp, []gethwrappers.ManyChainMultiSigOp) {
-	ops := make(map[string][]gethwrappers.ManyChainMultiSigOp)
+	rootMetadatas map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata,
+	txCounts map[ChainIdentifier]uint64,
+) (map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp, []gethwrappers.ManyChainMultiSigOp) {
+	ops := make(map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp)
 	chainAgnosticOps := make([]gethwrappers.ManyChainMultiSigOp, 0)
-	chainIdx := make(map[string]uint32, len(rootMetadatas))
+	chainIdx := make(map[ChainIdentifier]uint32, len(rootMetadatas))
 
 	for _, tx := range transactions {
 		rootMetadata := rootMetadatas[tx.ChainIdentifier]
@@ -86,8 +87,8 @@ func buildOperations(
 			MultiSig: rootMetadata.MultiSig,
 			Nonce:    big.NewInt(rootMetadata.PreOpCount.Int64() + int64(chainIdx[tx.ChainIdentifier])),
 			To:       tx.To,
-			Data:     common.FromHex(tx.Data),
-			Value:    big.NewInt(int64(tx.Value)),
+			Data:     tx.Data,
+			Value:    tx.Value,
 		}
 
 		chainAgnosticOps = append(chainAgnosticOps, op)
@@ -98,20 +99,20 @@ func buildOperations(
 	return ops, chainAgnosticOps
 }
 
-func sortedChainIdentifiers(chainMetadata map[string]ExecutableMCMSChainMetadata) []string {
-	chainIdentifiers := make([]string, 0, len(chainMetadata))
+func sortedChainIdentifiers(chainMetadata map[ChainIdentifier]ChainMetadata) []ChainIdentifier {
+	chainIdentifiers := make([]ChainIdentifier, 0, len(chainMetadata))
 	for chainID := range chainMetadata {
 		chainIdentifiers = append(chainIdentifiers, chainID)
 	}
-	sort.Strings(chainIdentifiers)
+	sort.Slice(chainIdentifiers, func(i, j int) bool { return chainIdentifiers[i] < chainIdentifiers[j] })
 	return chainIdentifiers
 }
 
 func buildMerkleTree(
-	chainIdentifiers []string,
-	rootMetadatas map[string]gethwrappers.ManyChainMultiSigRootMetadata,
-	ops map[string][]gethwrappers.ManyChainMultiSigOp,
-) (*MerkleTree, error) {
+	chainIdentifiers []ChainIdentifier,
+	rootMetadatas map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata,
+	ops map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp,
+) (*merkle.MerkleTree, error) {
 	hashLeaves := make([]common.Hash, 0)
 
 	for _, chainID := range chainIdentifiers {
@@ -135,89 +136,25 @@ func buildMerkleTree(
 		return hashLeaves[i].String() < hashLeaves[j].String()
 	})
 
-	return NewMerkleTree(hashLeaves), nil
+	return merkle.NewMerkleTree(hashLeaves), nil
 }
 
 func metadataEncoder(rootMetadata gethwrappers.ManyChainMultiSigRootMetadata) (common.Hash, error) {
-	// Define the tuple type using abi.NewType
-	bytes32Type, err := abi.NewType("bytes32", "", nil)
+	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"preOpCount","type":"uint40"},{"name":"postOpCount","type":"uint40"},{"name":"overridePreviousRoot","type":"bool"}]}]`
+	encoded, err := ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA, rootMetadata)
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	// Define the tuple type
-	tupleType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
-		{Name: "chainId", Type: "uint256"},
-		{Name: "multiSig", Type: "address"},
-		{Name: "preOpCount", Type: "uint40"},
-		{Name: "postOpCount", Type: "uint40"},
-		{Name: "overridePreviousRoot", Type: "bool"},
-	})
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	// Create an Arguments object representing the tuple in the correct order
-	args := abi.Arguments{
-		{
-			Type: bytes32Type,
-		},
-		{
-			Type: tupleType,
-		},
-	}
-
-	// Pack the data
-	packed, err := args.Pack(
-		MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA,
-		rootMetadata,
-	)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	// Return the Keccak256 hash of the packed data
-	return crypto.Keccak256Hash(packed), nil
+	return crypto.Keccak256Hash(encoded), nil
 }
 
 func txEncoder(op gethwrappers.ManyChainMultiSigOp) (common.Hash, error) {
-	// Define the tuple type using abi.NewType
-	bytes32Type, err := abi.NewType("bytes32", "", nil)
+	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"nonce","type":"uint40"},{"name":"to","type":"address"},{"name":"value","type":"uint256"},{"name":"data","type":"bytes"}]}]`
+	encoded, err := ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP, op)
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	// Define the tuple type
-	tupleType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
-		{Name: "chainId", Type: "uint256"},
-		{Name: "multiSig", Type: "address"},
-		{Name: "nonce", Type: "uint40"},
-		{Name: "to", Type: "address"},
-		{Name: "value", Type: "uint256"},
-		{Name: "data", Type: "bytes"},
-	})
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	// Create an Arguments object representing the tuple in the correct order
-	args := abi.Arguments{
-		{
-			Type: bytes32Type,
-		},
-		{
-			Type: tupleType,
-		},
-	}
-
-	// Pack the data using abi.Pack
-	packed, err := args.Pack(
-		MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP,
-		op,
-	)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	return crypto.Keccak256Hash(packed), nil
+	return crypto.Keccak256Hash(encoded), nil
 }

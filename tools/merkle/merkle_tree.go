@@ -1,4 +1,4 @@
-package executable
+package merkle
 
 import (
 	"github.com/ethereum/go-ethereum/common"
@@ -14,9 +14,7 @@ type MerkleTree struct {
 }
 
 func NewMerkleTree(leaves []common.Hash) *MerkleTree {
-	tree := &MerkleTree{
-		Layers: make([][]common.Hash, 0),
-	}
+	layers := make([][]common.Hash, 0)
 
 	currHashes := leaves
 	for len(currHashes) > 1 {
@@ -26,7 +24,7 @@ func NewMerkleTree(leaves []common.Hash) *MerkleTree {
 		}
 
 		// Append the current layer to the tree
-		tree.Layers = append(tree.Layers, currHashes)
+		layers = append(layers, currHashes)
 
 		// Calculate the parent hashes
 		tempHashes := make([]common.Hash, len(currHashes)/2)
@@ -40,8 +38,10 @@ func NewMerkleTree(leaves []common.Hash) *MerkleTree {
 	}
 
 	// Append the root hash to the tree
-	tree.Root = currHashes[0]
-	return tree
+	return &MerkleTree{
+		Root:   currHashes[0],
+		Layers: layers,
+	}
 }
 
 func (t *MerkleTree) GetProof(hash common.Hash) ([]common.Hash, error) {
@@ -51,19 +51,21 @@ func (t *MerkleTree) GetProof(hash common.Hash) ([]common.Hash, error) {
 	for i := 0; i < len(t.Layers); i++ {
 		found := false
 		for j, h := range t.Layers[i] {
-			if h == targetHash {
-				// Get the sibling hash
-				siblingIdx := j ^ 1
-				siblingHash := t.Layers[i][siblingIdx]
-				proof = append(proof, siblingHash)
-
-				// Get next target hash by sorting the pair of hashes and hashing them
-				targetHash = hashPair(targetHash, siblingHash)
-
-				// Move to the next layer
-				found = true
-				break
+			if h != targetHash {
+				continue
 			}
+
+			// Get the sibling hash
+			siblingIdx := j ^ 1
+			siblingHash := t.Layers[i][siblingIdx]
+			proof = append(proof, siblingHash)
+
+			// Get next target hash by sorting the pair of hashes and hashing them
+			targetHash = hashPair(targetHash, siblingHash)
+
+			// Move to the next layer
+			found = true
+			break
 		}
 
 		if !found {

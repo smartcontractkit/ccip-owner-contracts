@@ -18,15 +18,21 @@ type Config struct {
 	GroupSigners []Config         `json:"groupSigners"`
 }
 
-func NewConfig(quorum uint8, signers []common.Address, groupSigners []Config) *Config {
-	return &Config{
+func NewConfig(quorum uint8, signers []common.Address, groupSigners []Config) (*Config, error) {
+	config := Config{
 		Quorum:       quorum,
 		Signers:      signers,
 		GroupSigners: groupSigners,
 	}
+
+	if err := config.Validate(); err != nil {
+		return nil, err
+	}
+
+	return &config, nil
 }
 
-func NewConfigFromRaw(rawConfig gethwrappers.ManyChainMultiSigConfig) *Config {
+func NewConfigFromRaw(rawConfig gethwrappers.ManyChainMultiSigConfig) (*Config, error) {
 	groupToSigners := make([][]common.Address, len(rawConfig.GroupQuorums))
 	for _, signer := range rawConfig.Signers {
 		groupToSigners[signer.Group] = append(groupToSigners[signer.Group], signer.Addr)
@@ -52,7 +58,11 @@ func NewConfigFromRaw(rawConfig gethwrappers.ManyChainMultiSigConfig) *Config {
 		}
 	}
 
-	return &groups[0]
+	if err := groups[0].Validate(); err != nil {
+		return nil, err
+	}
+
+	return &groups[0], nil
 }
 
 func (c *Config) Validate() error {
@@ -122,25 +132,11 @@ func (c *Config) Equals(other *Config) bool {
 	}
 
 	// Compare all group signers in first exist in second (order doesn't matter)
+	// the reverse is not necessary because the lengths are already checked
 	for i := range c.GroupSigners {
 		found := false
 		for j := range other.GroupSigners {
 			if c.GroupSigners[i].Equals(&other.GroupSigners[j]) {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			return false
-		}
-	}
-
-	// Compare all group signers in second exist in first (order doesn't matter)
-	for i := range other.GroupSigners {
-		found := false
-		for j := range c.GroupSigners {
-			if other.GroupSigners[i].Equals(&c.GroupSigners[j]) {
 				found = true
 				break
 			}
