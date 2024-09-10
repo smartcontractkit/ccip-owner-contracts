@@ -12,10 +12,10 @@ type ChainMetadata struct {
 	MCMAddress  common.Address `json:"mcmAddress"`
 }
 
-// Proposal is a struct where the target contract is an MCMS contract
+// MCMSProposal is a struct where the target contract is an MCMS contract
 // with no forwarder contracts. This type does not support any type of atomic contract
 // call batching, as the MCMS contract natively doesn't support batching
-type Proposal struct {
+type MCMSProposal struct {
 	Version              string      `json:"version"`
 	ValidUntil           uint32      `json:"validUntil"`
 	Signatures           []Signature `json:"signatures"`
@@ -41,8 +41,8 @@ func NewProposal(
 	chainMetadata map[ChainIdentifier]ChainMetadata,
 	description string,
 	transactions []ChainOperation,
-) (*Proposal, error) {
-	proposal := Proposal{
+) (*MCMSProposal, error) {
+	proposal := MCMSProposal{
 		Version:              version,
 		ValidUntil:           validUntil,
 		Signatures:           signatures,
@@ -60,7 +60,7 @@ func NewProposal(
 	return &proposal, nil
 }
 
-func (m *Proposal) Validate() error {
+func (m *MCMSProposal) Validate() error {
 	if m.Version == "" {
 		return &errors.ErrInvalidVersion{
 			ReceivedVersion: m.Version,
@@ -103,7 +103,7 @@ func (m *Proposal) Validate() error {
 	return nil
 }
 
-func (m *Proposal) ToExecutor(clients map[ChainIdentifier]ContractDeployBackend) (*Executor, error) {
+func (m *MCMSProposal) ToExecutor(clients map[ChainIdentifier]ContractDeployBackend) (*Executor, error) {
 	// Create a new executor
 	executor, err := NewProposalExecutor(m, clients)
 	if err != nil {
@@ -111,4 +111,8 @@ func (m *Proposal) ToExecutor(clients map[ChainIdentifier]ContractDeployBackend)
 	}
 
 	return executor, nil
+}
+
+func (m *MCMSProposal) AddSignature(signature Signature) {
+	m.Signatures = append(m.Signatures, signature)
 }

@@ -126,7 +126,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	assert.NoError(t, err)
 
 	// Construct a proposal
-	proposal := Proposal{
+	proposal := MCMSProposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
@@ -247,7 +247,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	assert.NoError(t, err)
 
 	// Construct a proposal
-	proposal := Proposal{
+	proposal := MCMSProposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
@@ -386,7 +386,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	}
 
 	// Construct a proposal
-	proposal := Proposal{
+	proposal := MCMSProposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
@@ -521,7 +521,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 
 	// Construct a proposal
-	proposal := Proposal{
+	proposal := MCMSProposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
@@ -658,7 +658,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	}
 
 	// Construct a proposal
-	proposal := Proposal{
+	proposal := MCMSProposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
@@ -759,7 +759,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	}
 
 	// Construct a proposal
-	proposal := Proposal{
+	proposal := MCMSProposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
