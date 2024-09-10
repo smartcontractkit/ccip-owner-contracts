@@ -90,6 +90,11 @@ This library also exposed two types of signing functions to help sign proposals:
 
 ### Proposal Execution
 
+The library provides two functions to help with the execution of an MCMS Proposal:
+
+1. [`SetRootOnChain`](./proposal/mcms/executor.go#L234): Given auth and a ChainIdentifer, calls `setRoot` on the target MCMS for that given chainIdentifier.
+2. [`ExecuteOnChain`](./proposal/mcms/executor.go#L269): Given auth and an index, calls `execute` on the target MCMS for that given operation.
+
 ### Nuances of MCMSWithTimelockProposals
 
 The [`MCMSWithTimelockProposal`](./proposal/timelock/mcm_with_timelock.go#L24) is an extension of the `MCMSProposal` and has the following additional fields:
