@@ -21,8 +21,8 @@ func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 		false,
 		map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
-				NonceOffset: 1,
-				MCMAddress:  TestAddress,
+				StartingOpCount: 1,
+				MCMAddress:      TestAddress,
 			},
 		},
 		"Sample description",
@@ -52,8 +52,8 @@ func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
 		false,
 		map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
-				NonceOffset: 1,
-				MCMAddress:  TestAddress,
+				StartingOpCount: 1,
+				MCMAddress:      TestAddress,
 			},
 		},
 		"Sample description",
@@ -84,8 +84,8 @@ func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
 		false,
 		map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
-				NonceOffset: 1,
-				MCMAddress:  TestAddress,
+				StartingOpCount: 1,
+				MCMAddress:      TestAddress,
 			},
 		},
 		"Sample description",
@@ -143,8 +143,8 @@ func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
 		false,
 		map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
-				NonceOffset: 1,
-				MCMAddress:  TestAddress,
+				StartingOpCount: 1,
+				MCMAddress:      TestAddress,
 			},
 		},
 		"",
@@ -175,8 +175,8 @@ func TestMCMSOnlyProposal_Validate_NoTransactions(t *testing.T) {
 		false,
 		map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
-				NonceOffset: 1,
-				MCMAddress:  TestAddress,
+				StartingOpCount: 1,
+				MCMAddress:      TestAddress,
 			},
 		},
 		"Sample description",
@@ -196,8 +196,8 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 		false,
 		map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
-				NonceOffset: 1,
-				MCMAddress:  TestAddress,
+				StartingOpCount: 1,
+				MCMAddress:      TestAddress,
 			},
 		},
 		"Sample description",
