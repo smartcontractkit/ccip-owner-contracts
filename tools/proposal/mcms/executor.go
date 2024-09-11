@@ -13,6 +13,7 @@ import (
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/merkle"
+	"golang.org/x/exp/slices"
 )
 
 type Executor struct {
@@ -152,6 +153,64 @@ func (e *Executor) getMCMSCallers(clients map[ChainIdentifier]ContractDeployBack
 	return mcmsWrappers, nil
 }
 
+func (e *Executor) CheckQuorum(client bind.ContractBackend, auth *bind.TransactOpts, chain ChainIdentifier) (bool, error) {
+	hash, err := e.SigningHash()
+	if err != nil {
+		return false, err
+	}
+
+	recoveredSigners := make([]common.Address, len(e.Proposal.Signatures))
+	for i, sig := range e.Proposal.Signatures {
+		recoveredAddr, err := sig.Recover(hash)
+		if err != nil {
+			return false, err
+		}
+		recoveredSigners[i] = recoveredAddr
+	}
+
+	mcm, err := gethwrappers.NewManyChainMultiSig(e.RootMetadatas[chain].MultiSig, client)
+	if err != nil {
+		return false, err
+	}
+
+	config, err := mcm.GetConfig(&bind.CallOpts{})
+	if err != nil {
+		return false, err
+	}
+
+	// spread the signers to get address from the configuration
+	var contractSigners []common.Address
+	for _, c := range config.Signers {
+		contractSigners = append(contractSigners, c.Addr)
+	}
+
+	// Validate that all signers are valid
+	for _, signer := range recoveredSigners {
+		if !slices.Contains(contractSigners, signer) {
+			return false, &errors.ErrInvalidSignature{
+				ChainIdentifier:  uint64(chain),
+				MCMSAddress:      e.RootMetadatas[chain].MultiSig,
+				RecoveredAddress: signer,
+			}
+		}
+	}
+
+	// Validate if the quorum is met
+
+	c, err := configwrappers.NewConfigFromRaw(config)
+	if err != nil {
+		return false, err
+	}
+
+	if !isReadyToSetRoot(*c, recoveredSigners) {
+		return false, &errors.ErrQuorumNotMet{
+			ChainIdentifier: uint64(chain),
+		}
+	}
+
+	return true, nil
+}
+
 func (e *Executor) ValidateSignatures(clients map[ChainIdentifier]ContractDeployBackend) (bool, error) {
 	hash, err := e.SigningHash()
 	if err != nil {
@@ -234,7 +293,7 @@ func isGroupAtConsensus(group configwrappers.Config, recoveredSigners []common.A
 	return (signerApprovalsInGroup + groupApprovals) >= int(group.Quorum)
 }
 
-func (e *Executor) SetRootOnChain(client ContractDeployBackend, auth *bind.TransactOpts, chain ChainIdentifier) (*types.Transaction, error) {
+func (e *Executor) SetRootOnChain(client bind.ContractBackend, auth *bind.TransactOpts, chain ChainIdentifier) (*types.Transaction, error) {
 	metadata := e.RootMetadatas[chain]
 	mcms, err := gethwrappers.NewManyChainMultiSig(metadata.MultiSig, client)
 	if err != nil {
@@ -273,7 +332,7 @@ func (e *Executor) SetRootOnChain(client ContractDeployBackend, auth *bind.Trans
 	)
 }
 
-func (e *Executor) ExecuteOnChain(client ContractDeployBackend, auth *bind.TransactOpts, idx int) (*types.Transaction, error) {
+func (e *Executor) ExecuteOnChain(client bind.ContractBackend, auth *bind.TransactOpts, idx int) (*types.Transaction, error) {
 	mcmOperation := e.ChainAgnosticOps[idx]
 	mcms, err := gethwrappers.NewManyChainMultiSig(mcmOperation.MultiSig, client)
 	if err != nil {
