@@ -13,11 +13,6 @@ import (
 
 var ZERO_HASH = common.Hash{}
 
-type MCMSWithTimelockChainMetadata struct {
-	mcms.ChainMetadata
-	TimelockAddress common.Address `json:"timelockAddress"`
-}
-
 type TimelockOperation string
 
 const (
@@ -34,8 +29,7 @@ type MCMSWithTimelockProposal struct {
 	// i.e. 1d, 1w, 1m, 1y
 	MinDelay string `json:"minDelay"`
 
-	// Overridden: Map of chain identifier to chain metadata
-	ChainMetadata map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata `json:"chainMetadata"`
+	TimelockAddresses map[mcms.ChainIdentifier]common.Address `json:"timelockAddresses"`
 
 	// Overridden: Operations to be executed after wrapping in a timelock
 	Transactions []BatchChainOperation `json:"transactions"`
@@ -46,7 +40,8 @@ func NewMCMSWithTimelockProposal(
 	validUntil uint32,
 	signatures []mcms.Signature,
 	overridePreviousRoot bool,
-	chainMetadata map[mcms.ChainIdentifier]MCMSWithTimelockChainMetadata,
+	chainMetadata map[mcms.ChainIdentifier]mcms.ChainMetadata,
+	timelockAddresses map[mcms.ChainIdentifier]common.Address,
 	description string,
 	transactions []BatchChainOperation,
 	operation TimelockOperation,
@@ -59,11 +54,12 @@ func NewMCMSWithTimelockProposal(
 			Signatures:           signatures,
 			OverridePreviousRoot: overridePreviousRoot,
 			Description:          description,
+			ChainMetadata:        chainMetadata,
 		},
-		Operation:     operation,
-		MinDelay:      minDelay,
-		ChainMetadata: chainMetadata,
-		Transactions:  transactions,
+		Operation:         operation,
+		MinDelay:          minDelay,
+		TimelockAddresses: timelockAddresses,
+		Transactions:      transactions,
 	}
 
 	err := proposal.Validate()
@@ -135,7 +131,17 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 	return nil
 }
 
-func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcms.Proposal, error) {
+func (m *MCMSWithTimelockProposal) ToExecutor(sim bool) (*mcms.Executor, error) {
+	// Convert the proposal to an MCMS only proposal
+	mcmOnly, err := m.toMCMSOnlyProposal()
+	if err != nil {
+		return nil, err
+	}
+
+	return mcmOnly.ToExecutor(sim)
+}
+
+func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.Proposal, error) {
 	mcmOnly := m.Proposal
 
 	// Start predecessor map with all chains pointing to the zero hash
@@ -148,8 +154,8 @@ func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcms.Proposal, error) {
 	mcmOnly.ChainMetadata = make(map[mcms.ChainIdentifier]mcms.ChainMetadata)
 	for chain, metadata := range m.ChainMetadata {
 		mcmOnly.ChainMetadata[chain] = mcms.ChainMetadata{
-			NonceOffset: metadata.NonceOffset,
-			MCMAddress:  metadata.MCMAddress,
+			StartingOpCount: metadata.StartingOpCount,
+			MCMAddress:      metadata.MCMAddress,
 		}
 	}
 
@@ -206,7 +212,7 @@ func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcms.Proposal, error) {
 		mcmOnly.Transactions = append(mcmOnly.Transactions, mcms.ChainOperation{
 			ChainIdentifier: t.ChainIdentifier,
 			Operation: mcms.Operation{
-				To:           m.ChainMetadata[t.ChainIdentifier].TimelockAddress,
+				To:           m.TimelockAddresses[t.ChainIdentifier],
 				Data:         data,
 				Value:        big.NewInt(0), // TODO: is this right?
 				ContractType: "RBACTimelock",

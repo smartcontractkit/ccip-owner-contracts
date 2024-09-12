@@ -8,8 +8,8 @@ import (
 )
 
 type ChainMetadata struct {
-	NonceOffset uint64         `json:"nonceOffset"`
-	MCMAddress  common.Address `json:"mcmAddress"`
+	StartingOpCount uint64         `json:"startingOpCount"`
+	MCMAddress      common.Address `json:"mcmAddress"`
 }
 
 // Proposal is a struct where the target contract is an MCMS contract
@@ -103,9 +103,9 @@ func (m *Proposal) Validate() error {
 	return nil
 }
 
-func (m *Proposal) ToExecutor(clients map[ChainIdentifier]ContractDeployBackend) (*Executor, error) {
+func (m *Proposal) ToExecutor(sim bool) (*Executor, error) {
 	// Create a new executor
-	executor, err := NewProposalExecutor(m, clients)
+	executor, err := NewProposalExecutor(m, sim)
 	if err != nil {
 		return nil, err
 	}
