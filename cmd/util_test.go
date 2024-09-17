@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"crypto/ecdsa"
 	"encoding/json"
 	"os"
 	"testing"
@@ -10,6 +11,23 @@ import (
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/timelock"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestLoadPrivateKey(t *testing.T) {
+	// Set up test environment
+	privateKey := "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+	// Write private key to .env file
+	err := os.WriteFile(".env", []byte("PRIVATE_KEY="+privateKey), 0644)
+	assert.NoError(t, err)
+
+	// Call the function
+	pk, err := LoadPrivateKey()
+
+	// Assertions
+	assert.NoError(t, err)
+	assert.NotNil(t, pk)
+	assert.IsType(t, &ecdsa.PrivateKey{}, pk)
+}
 
 func TestFromFile(t *testing.T) {
 	// Create a temporary file for testing

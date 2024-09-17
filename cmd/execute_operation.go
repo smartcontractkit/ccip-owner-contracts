@@ -17,7 +17,7 @@ import (
 var index uint64
 
 var ExecuteOperationCmd = &cobra.Command{
-	Use:   "execute-chain",
+	Use:   "execute-operation",
 	Short: "Executes all operations for a given chain in an MCMS Proposal. Root must be set first.",
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {

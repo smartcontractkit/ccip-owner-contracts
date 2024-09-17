@@ -16,7 +16,7 @@ func Test_CheckQuorumCommand(t *testing.T) {
 
 	assert.Equal(t, "http://localhost:8545", rpc)
 	assert.Equal(t, "./proposal.json", proposalPath)
-	assert.Equal(t, "1", chainSelector)
+	assert.Equal(t, uint64(1), chainSelector)
 
 	expectedDescription := "help for check-quorum"
 	assert.Containsf(t, actual.String(), expectedDescription, "expected description to contain '%s'", expectedDescription)
