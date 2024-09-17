@@ -27,7 +27,7 @@ func SignPlainKey(privateKey *ecdsa.PrivateKey, filePath string, proposalType pr
 	}
 
 	// Create executor
-	executor, err := proposal.ToExecutor(make(map[mcms.ChainIdentifier]mcms.ContractDeployBackend)) // TODO: pass in a real backend
+	executor, err := proposal.ToExecutor() // TODO: pass in a real backend
 	if err != nil {
 		return err
 	}
