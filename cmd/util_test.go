@@ -1,4 +1,4 @@
-package signing
+package cmd
 
 import (
 	"encoding/json"

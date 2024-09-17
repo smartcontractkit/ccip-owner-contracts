@@ -153,7 +153,7 @@ func (e *Executor) getMCMSCallers(clients map[ChainIdentifier]ContractDeployBack
 	return mcmsWrappers, nil
 }
 
-func (e *Executor) CheckQuorum(client bind.ContractBackend, auth *bind.TransactOpts, chain ChainIdentifier) (bool, error) {
+func (e *Executor) CheckQuorum(client bind.ContractBackend, chain ChainIdentifier) (bool, error) {
 	hash, err := e.SigningHash()
 	if err != nil {
 		return false, err

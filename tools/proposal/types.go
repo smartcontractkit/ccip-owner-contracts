@@ -17,7 +17,7 @@ var StringToProposalType = map[string]ProposalType{
 }
 
 type Proposal interface {
-	ToExecutor(clients map[mcms.ChainIdentifier]mcms.ContractDeployBackend) (*mcms.Executor, error)
+	ToExecutor() (*mcms.Executor, error)
 	AddSignature(signature mcms.Signature)
 	Validate() error
 }

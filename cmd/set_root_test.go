@@ -12,13 +12,12 @@ func Test_SetRootCommand(t *testing.T) {
 	actual := new(bytes.Buffer)
 	rootCmd.SetOut(actual)
 	rootCmd.SetErr(actual)
-	rootCmd.SetArgs([]string{"set-root", "--rpc", "http://localhost:8545", "--proposal", "./proposal.json", "--selector", "1", "--pk", "0x123"})
+	rootCmd.SetArgs([]string{"set-root", "--rpc", "http://localhost:8545", "--proposal", "./proposal.json", "--selector", "1"})
 	rootCmd.Execute()
 
 	assert.Equal(t, "http://localhost:8545", rpc)
 	assert.Equal(t, "./proposal.json", proposalPath)
 	assert.Equal(t, "1", chainSelector)
-	assert.Equal(t, "0x123", pk)
 
 	expectedDescription := "no such file or directory"
 	assert.Containsf(t, actual.String(), expectedDescription, "expected description to contain '%s'", expectedDescription)
@@ -41,7 +40,7 @@ func Test_SetRootCommandWithFile(t *testing.T) {
 	}
 
 	// update this test when we have better proposal validation in place
-	rootCmd.SetArgs([]string{"set-root", "--rpc", "http://localhost:8545", "--proposal", temp.Name(), "--selector", "14767482510784806043", "--pk", "0x123"})
+	rootCmd.SetArgs([]string{"set-root", "--rpc", "http://localhost:8545", "--proposal", temp.Name(), "--selector", "14767482510784806043"})
 	shouldPanic(t, rootCmd.Execute)
 
 	assert.Equal(t, "14767482510784806043", chainSelector)

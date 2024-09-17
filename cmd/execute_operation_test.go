@@ -17,7 +17,6 @@ func Test_ExecuteCommand(t *testing.T) {
 	assert.Equal(t, "http://localhost:8545", rpc)
 	assert.Equal(t, "./proposal.json", proposalPath)
 	assert.Equal(t, "1", chainSelector)
-	assert.Equal(t, "0x123", pk)
 
 	expectedDescription := "help for execute"
 	assert.Containsf(t, actual.String(), expectedDescription, "expected description to contain '%s'", expectedDescription)
