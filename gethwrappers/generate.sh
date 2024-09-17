@@ -9,10 +9,10 @@ abigen() {
     go run "$abigen_package_path" "$@"
 }
 
-abigen --version | grep -F "abigen version $abigen_version-stable" >/dev/null || (
+abigen --version | grep -F "abigen version $abigen_version-stable" >/dev/null || {
     echo "ASSERTION: abigen version should have been $abigen_version." 1>&2
     exit 1
-)
+}
 
 abigen_owner_contracts() {
   abigen --pkg gethwrappers \
