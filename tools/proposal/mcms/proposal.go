@@ -103,9 +103,9 @@ func (m *Proposal) Validate() error {
 	return nil
 }
 
-func (m *Proposal) ToExecutor() (*Executor, error) {
+func (m *Proposal) ToExecutor(sim bool) (*Executor, error) {
 	// Create a new executor
-	executor, err := NewProposalExecutor(m)
+	executor, err := NewProposalExecutor(m, sim)
 	if err != nil {
 		return nil, err
 	}

@@ -29,7 +29,7 @@ var SetMerkleCmd = &cobra.Command{
 			return err
 		}
 
-		e, err := mcms.NewProposalExecutor(proposal)
+		e, err := mcms.NewProposalExecutor(proposal, false)
 		if err != nil {
 			return err
 		}

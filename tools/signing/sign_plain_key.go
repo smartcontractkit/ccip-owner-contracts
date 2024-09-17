@@ -23,7 +23,7 @@ func signPlainKey(privateKeyHex string) {
 		return
 	}
 
-	executor, err := proposal.ToExecutor() // TODO: pass in a real backend
+	executor, err := proposal.ToExecutor(false) // TODO: pass in a real backend
 	if err != nil {
 		log.Fatal(err)
 	}

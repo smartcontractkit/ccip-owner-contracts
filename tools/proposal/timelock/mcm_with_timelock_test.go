@@ -419,7 +419,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	callers := map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor()
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -590,7 +590,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	callers := map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor()
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -671,7 +671,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	}
 
 	// Construct executor
-	executor, err = proposal.ToExecutor()
+	executor, err = proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -789,7 +789,7 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 	callers := map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor()
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -914,7 +914,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	callers := map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor()
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -1114,7 +1114,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	callers := map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor()
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -1195,7 +1195,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	}
 
 	// Construct executor
-	executor, err = proposal.ToExecutor()
+	executor, err = proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -1326,7 +1326,7 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 	callers := map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor()
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
