@@ -133,8 +133,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 		OverridePreviousRoot: false,
 		ChainMetadata: map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
-				NonceOffset: 0,
-				MCMAddress:  mcms.Address(),
+				StartingOpCount: 0,
+				MCMAddress:      mcms.Address(),
 			},
 		},
 		Transactions: []ChainOperation{
@@ -149,8 +149,11 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 		},
 	}
 
+	// Gen caller map for easy access
+	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{TestChain1: sim})
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -168,12 +171,12 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
-	quorumMet, err := executor.ValidateSignatures()
+	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
 	assert.NoError(t, err)
 
 	// SetRoot on the contract
-	tx, err = executor.SetRootOnChain(auths[0], TestChain1)
+	tx, err = executor.SetRootOnChain(sim, auths[0], TestChain1)
 	assert.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
@@ -185,7 +188,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
-	tx, err = executor.ExecuteOnChain(auths[0], 0)
+	tx, err = executor.ExecuteOnChain(sim, auths[0], 0)
 	assert.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
@@ -254,8 +257,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 		OverridePreviousRoot: false,
 		ChainMetadata: map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
-				NonceOffset: 0,
-				MCMAddress:  mcms.Address(),
+				StartingOpCount: 0,
+				MCMAddress:      mcms.Address(),
 			},
 		},
 		Transactions: []ChainOperation{
@@ -270,8 +273,11 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 		},
 	}
 
+	// Gen caller map for easy access
+	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{TestChain1: sim})
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -291,12 +297,12 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	}
 
 	// Validate the signatures
-	quorumMet, err := executor.ValidateSignatures()
+	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
 	assert.NoError(t, err)
 
 	// SetRoot on the contract
-	tx, err = executor.SetRootOnChain(auths[0], TestChain1)
+	tx, err = executor.SetRootOnChain(sim, auths[0], TestChain1)
 	assert.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
@@ -308,7 +314,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
-	tx, err = executor.ExecuteOnChain(auths[0], 0)
+	tx, err = executor.ExecuteOnChain(sim, auths[0], 0)
 	assert.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
@@ -393,15 +399,18 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		OverridePreviousRoot: false,
 		ChainMetadata: map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
-				NonceOffset: 0,
-				MCMAddress:  mcms.Address(),
+				StartingOpCount: 0,
+				MCMAddress:      mcms.Address(),
 			},
 		},
 		Transactions: operations,
 	}
 
+	// Gen caller map for easy access
+	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{TestChain1: sim})
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -419,12 +428,12 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
-	quorumMet, err := executor.ValidateSignatures()
+	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
 	assert.NoError(t, err)
 
 	// SetRoot on the contract
-	tx, err = executor.SetRootOnChain(auths[0], TestChain1)
+	tx, err = executor.SetRootOnChain(sim, auths[0], TestChain1)
 	assert.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
@@ -438,7 +447,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	// Execute the proposal
 	for i := 0; i < 4; i++ {
 		// Execute the proposal
-		tx, err = executor.ExecuteOnChain(auths[0], i)
+		tx, err = executor.ExecuteOnChain(sim, auths[0], i)
 		assert.NoError(t, err)
 		assert.NotNil(t, tx)
 		sim.Commit()
@@ -528,15 +537,18 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		OverridePreviousRoot: false,
 		ChainMetadata: map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
-				NonceOffset: 0,
-				MCMAddress:  mcms.Address(),
+				StartingOpCount: 0,
+				MCMAddress:      mcms.Address(),
 			},
 		},
 		Transactions: operations,
 	}
 
+	// Gen caller map for easy access
+	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{TestChain1: sim})
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -556,12 +568,12 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 
 	// Validate the signatures
-	quorumMet, err := executor.ValidateSignatures()
+	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
 	assert.NoError(t, err)
 
 	// SetRoot on the contract
-	tx, err = executor.SetRootOnChain(auths[0], TestChain1)
+	tx, err = executor.SetRootOnChain(sim, auths[0], TestChain1)
 	assert.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
@@ -575,7 +587,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	// Execute the proposal
 	for i := 0; i < 4; i++ {
 		// Execute the proposal
-		tx, err = executor.ExecuteOnChain(auths[0], i)
+		tx, err = executor.ExecuteOnChain(sim, auths[0], i)
 		assert.NoError(t, err)
 		assert.NotNil(t, tx)
 		sim.Commit()
@@ -665,15 +677,18 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 		OverridePreviousRoot: false,
 		ChainMetadata: map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
-				NonceOffset: 0,
-				MCMAddress:  mcms.Address(),
+				StartingOpCount: 0,
+				MCMAddress:      mcms.Address(),
 			},
 		},
 		Transactions: operations,
 	}
 
+	// Gen caller map for easy access
+	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{TestChain1: sim})
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -693,7 +708,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	}
 
 	// Validate the signatures
-	quorumMet, err := executor.ValidateSignatures()
+	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.False(t, quorumMet)
 	assert.Error(t, err)
 	// assert error is of type ErrQuorumNotMet
@@ -766,15 +781,18 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 		OverridePreviousRoot: false,
 		ChainMetadata: map[ChainIdentifier]ChainMetadata{
 			TestChain1: {
-				NonceOffset: 0,
-				MCMAddress:  mcms.Address(),
+				StartingOpCount: 0,
+				MCMAddress:      mcms.Address(),
 			},
 		},
 		Transactions: operations,
 	}
 
+	// Gen caller map for easy access
+	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+
 	// Construct executor
-	executor, err := proposal.ToExecutor(map[ChainIdentifier]ContractDeployBackend{TestChain1: sim})
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -794,7 +812,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	}
 
 	// Validate the signatures
-	quorumMet, err := executor.ValidateSignatures()
+	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.False(t, quorumMet)
 	assert.Error(t, err)
 	// assert error is of type ErrQuorumNotMet

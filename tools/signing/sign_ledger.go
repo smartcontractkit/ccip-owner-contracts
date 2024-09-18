@@ -1,7 +1,6 @@
 package signing
 
 import (
-	"os"
 
 	// NOTE MUST BE > 1.14 for this fix
 	// https://github.com/ethereum/go-ethereum/pull/28945
@@ -12,15 +11,9 @@ import (
 )
 
 // Just run this locally to sign from the ledger.
-func SignLedger(derivationPath []uint32, filePath string, proposalType proposal.ProposalType) error {
-	// Load file
-	proposal, err := LoadProposal(proposalType, filePath)
-	if err != nil {
-		return err
-	}
-
+func SignLedger(derivationPath []uint32, proposal proposal.Proposal) error {
 	// Validate proposal
-	err = proposal.Validate()
+	err := proposal.Validate()
 	if err != nil {
 		return err
 	}
@@ -36,7 +29,7 @@ func SignLedger(derivationPath []uint32, filePath string, proposalType proposal.
 	wallet := wallets[0]
 
 	// Create executor
-	executor, err := proposal.ToExecutor(make(map[mcms.ChainIdentifier]mcms.ContractDeployBackend)) // TODO: pass in a real backend
+	executor, err := proposal.ToExecutor(false) // TODO: pass in a real backend
 	if err != nil {
 		return err
 	}
@@ -72,9 +65,6 @@ func SignLedger(derivationPath []uint32, filePath string, proposalType proposal.
 
 	// Add signature to proposal
 	proposal.AddSignature(sigObj)
-
-	// Write proposal to file
-	WriteProposalToFile(proposal, os.Args[0])
 
 	// Close wallet
 	err = wallet.Close()

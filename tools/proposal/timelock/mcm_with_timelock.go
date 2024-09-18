@@ -131,14 +131,14 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 	return nil
 }
 
-func (m *MCMSWithTimelockProposal) ToExecutor(clients map[mcms.ChainIdentifier]mcms.ContractDeployBackend) (*mcms.Executor, error) {
+func (m *MCMSWithTimelockProposal) ToExecutor(sim bool) (*mcms.Executor, error) {
 	// Convert the proposal to an MCMS only proposal
 	mcmOnly, err := m.toMCMSOnlyProposal()
 	if err != nil {
 		return nil, err
 	}
 
-	return mcmOnly.ToExecutor(clients)
+	return mcmOnly.ToExecutor(sim)
 }
 
 func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, error) {
@@ -154,8 +154,8 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 	mcmOnly.ChainMetadata = make(map[mcms.ChainIdentifier]mcms.ChainMetadata)
 	for chain, metadata := range m.ChainMetadata {
 		mcmOnly.ChainMetadata[chain] = mcms.ChainMetadata{
-			NonceOffset: metadata.NonceOffset,
-			MCMAddress:  metadata.MCMAddress,
+			StartingOpCount: metadata.StartingOpCount,
+			MCMAddress:      metadata.MCMAddress,
 		}
 	}
 

@@ -28,16 +28,12 @@ func TestCalculateTransactionCounts(t *testing.T) {
 
 func TestBuildRootMetadatas_Success(t *testing.T) {
 	chainMetadata := map[ChainIdentifier]ChainMetadata{
-		TestChain1: {MCMAddress: common.HexToAddress("0x1"), NonceOffset: 0},
-		TestChain2: {MCMAddress: common.HexToAddress("0x2"), NonceOffset: 1},
+		TestChain1: {MCMAddress: common.HexToAddress("0x1"), StartingOpCount: 0},
+		TestChain2: {MCMAddress: common.HexToAddress("0x2"), StartingOpCount: 3},
 	}
 	txCounts := map[ChainIdentifier]uint64{
 		TestChain1: 2,
 		TestChain2: 1,
-	}
-	currentOpCounts := map[ChainIdentifier]big.Int{
-		TestChain1: *big.NewInt(0),
-		TestChain2: *big.NewInt(2),
 	}
 
 	expected := map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata{
@@ -57,23 +53,20 @@ func TestBuildRootMetadatas_Success(t *testing.T) {
 		},
 	}
 
-	result, err := buildRootMetadatas(chainMetadata, txCounts, currentOpCounts, true)
+	result, err := buildRootMetadatas(chainMetadata, txCounts, true, false)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
 
 func TestBuildRootMetadatas_InvalidChainID(t *testing.T) {
 	chainMetadata := map[ChainIdentifier]ChainMetadata{
-		0: {MCMAddress: common.HexToAddress("0x1"), NonceOffset: 0},
+		0: {MCMAddress: common.HexToAddress("0x1"), StartingOpCount: 0},
 	}
 	txCounts := map[ChainIdentifier]uint64{
 		0: 1,
 	}
-	currentOpCounts := map[ChainIdentifier]big.Int{
-		0: *big.NewInt(0),
-	}
 
-	result, err := buildRootMetadatas(chainMetadata, txCounts, currentOpCounts, true)
+	result, err := buildRootMetadatas(chainMetadata, txCounts, true, false)
 	assert.Error(t, err)
 	assert.Nil(t, result)
 	assert.IsType(t, &errors.ErrInvalidChainID{}, err)

@@ -26,8 +26,8 @@ func calculateTransactionCounts(transactions []ChainOperation) map[ChainIdentifi
 func buildRootMetadatas(
 	chainMetadata map[ChainIdentifier]ChainMetadata,
 	txCounts map[ChainIdentifier]uint64,
-	currentOpCounts map[ChainIdentifier]big.Int,
 	overridePreviousRoot bool,
+	isSim bool,
 ) (map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata, error) {
 	rootMetadatas := make(map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata)
 
@@ -39,14 +39,6 @@ func buildRootMetadatas(
 			}
 		}
 
-		currentNonce, ok := currentOpCounts[chainID]
-		if !ok {
-			return nil, &errors.ErrMissingChainDetails{
-				ChainIdentifier: uint64(chainID),
-				Parameter:       "current op count",
-			}
-		}
-
 		currentTxCount, ok := txCounts[chainID]
 		if !ok {
 			return nil, &errors.ErrMissingChainDetails{
@@ -55,11 +47,17 @@ func buildRootMetadatas(
 			}
 		}
 
+		// Simulated chains always have block.chainid = 1337
+		// So for setRoot to execute (not throw WrongChainId) we must
+		// override the evmChainID to be 1337.
+		if isSim {
+			chain.EvmChainID = 1337
+		}
 		rootMetadatas[chainID] = gethwrappers.ManyChainMultiSigRootMetadata{
 			ChainId:              new(big.Int).SetUint64(chain.EvmChainID),
 			MultiSig:             metadata.MCMAddress,
-			PreOpCount:           big.NewInt(currentNonce.Int64() + int64(metadata.NonceOffset)),                         // TODO: handle overflow
-			PostOpCount:          big.NewInt(currentNonce.Int64() + int64(metadata.NonceOffset) + int64(currentTxCount)), // TODO: handle overflow
+			PreOpCount:           big.NewInt(int64(metadata.StartingOpCount)),                         // TODO: handle overflow
+			PostOpCount:          big.NewInt(int64(metadata.StartingOpCount) + int64(currentTxCount)), // TODO: handle overflow
 			OverridePreviousRoot: overridePreviousRoot,
 		}
 	}
