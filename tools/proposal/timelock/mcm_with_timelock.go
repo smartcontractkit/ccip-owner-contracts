@@ -22,7 +22,7 @@ const (
 )
 
 type MCMSWithTimelockProposal struct {
-	mcms.Proposal
+	mcms.MCMSProposal
 
 	Operation TimelockOperation `json:"operation"` // Always 'schedule', 'cancel', or 'bypass'
 
@@ -48,7 +48,7 @@ func NewMCMSWithTimelockProposal(
 	minDelay string,
 ) (*MCMSWithTimelockProposal, error) {
 	proposal := MCMSWithTimelockProposal{
-		Proposal: mcms.Proposal{
+		MCMSProposal: mcms.MCMSProposal{
 			Version:              version,
 			ValidUntil:           validUntil,
 			Signatures:           signatures,
@@ -141,8 +141,8 @@ func (m *MCMSWithTimelockProposal) ToExecutor(sim bool) (*mcms.Executor, error) 
 	return mcmOnly.ToExecutor(sim)
 }
 
-func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.Proposal, error) {
-	mcmOnly := m.Proposal
+func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, error) {
+	mcmOnly := m.MCMSProposal
 
 	// Start predecessor map with all chains pointing to the zero hash
 	predecessorMap := make(map[mcms.ChainIdentifier]common.Hash)
@@ -177,12 +177,12 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.Proposal, error) {
 
 		abi, err := owner.RBACTimelockMetaData.GetAbi()
 		if err != nil {
-			return mcms.Proposal{}, err
+			return mcms.MCMSProposal{}, err
 		}
 
 		operationId, err := hashOperationBatch(calls, predecessor, salt)
 		if err != nil {
-			return mcms.Proposal{}, err
+			return mcms.MCMSProposal{}, err
 		}
 
 		// Encode the data based on the operation
@@ -191,20 +191,20 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.Proposal, error) {
 		case Schedule:
 			data, err = abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
 			if err != nil {
-				return mcms.Proposal{}, err
+				return mcms.MCMSProposal{}, err
 			}
 		case Cancel:
 			data, err = abi.Pack("cancel", operationId)
 			if err != nil {
-				return mcms.Proposal{}, err
+				return mcms.MCMSProposal{}, err
 			}
 		case Bypass:
 			data, err = abi.Pack("bypasserExecuteBatch", calls)
 			if err != nil {
-				return mcms.Proposal{}, err
+				return mcms.MCMSProposal{}, err
 			}
 		default:
-			return mcms.Proposal{}, &errors.ErrInvalidTimelockOperation{
+			return mcms.MCMSProposal{}, &errors.ErrInvalidTimelockOperation{
 				ReceivedTimelockOperation: string(m.Operation),
 			}
 		}
@@ -224,6 +224,10 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.Proposal, error) {
 	}
 
 	return mcmOnly, nil
+}
+
+func (m *MCMSWithTimelockProposal) AddSignature(signature mcms.Signature) {
+	m.Signatures = append(m.Signatures, signature)
 }
 
 // hashOperationBatch replicates the hash calculation from Solidity

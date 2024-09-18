@@ -7,18 +7,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_CheckQuorumCommand(t *testing.T) {
+func Test_ExecuteCommand(t *testing.T) {
 	actual := new(bytes.Buffer)
 	rootCmd.SetOut(actual)
 	rootCmd.SetErr(actual)
-	rootCmd.SetArgs([]string{"check-quorum", "--rpc", "http://localhost:8545", "--proposal", "./proposal.json", "--selector", "1"})
+	rootCmd.SetArgs([]string{"execute-operation", "--rpc", "http://localhost:8545", "--proposal", "./proposal.json", "--selector", "1", "--index", "3"})
 	rootCmd.Execute()
 
 	assert.Equal(t, "http://localhost:8545", rpc)
 	assert.Equal(t, "./proposal.json", proposalPath)
-	assert.Equal(t, "1", chainSelector)
-	assert.Equal(t, "", pk)
+	assert.Equal(t, uint64(1), chainSelector)
+	assert.Equal(t, uint64(3), index)
 
-	expectedDescription := "help for check-quorum"
+	expectedDescription := "help for execute"
 	assert.Containsf(t, actual.String(), expectedDescription, "expected description to contain '%s'", expectedDescription)
 }

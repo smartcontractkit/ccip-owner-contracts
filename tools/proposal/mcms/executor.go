@@ -17,7 +17,7 @@ import (
 )
 
 type Executor struct {
-	Proposal         *Proposal
+	Proposal         *MCMSProposal
 	Tree             *merkle.MerkleTree
 	RootMetadatas    map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata
 	Operations       map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp
@@ -28,7 +28,7 @@ type Executor struct {
 // The executor has all the relevant metadata for onchain execution.
 // The sim flag indicates that this will be executed against a simulated chain (
 // which has a chainID of 1337).
-func NewProposalExecutor(proposal *Proposal, sim bool) (*Executor, error) {
+func NewProposalExecutor(proposal *MCMSProposal, sim bool) (*Executor, error) {
 	txCounts := calculateTransactionCounts(proposal.Transactions)
 	rootMetadatas, err := buildRootMetadatas(proposal.ChainMetadata, txCounts, proposal.OverridePreviousRoot, sim)
 	if err != nil {
@@ -157,7 +157,7 @@ func (e *Executor) getMCMSCallers(clients map[ChainIdentifier]ContractDeployBack
 	return mcmsWrappers, nil
 }
 
-func (e *Executor) CheckQuorum(client bind.ContractBackend, auth *bind.TransactOpts, chain ChainIdentifier) (bool, error) {
+func (e *Executor) CheckQuorum(client bind.ContractBackend, chain ChainIdentifier) (bool, error) {
 	hash, err := e.SigningHash()
 	if err != nil {
 		return false, err
