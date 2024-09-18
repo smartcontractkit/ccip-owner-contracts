@@ -153,7 +153,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor()
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -277,7 +277,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor()
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -410,7 +410,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor()
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -548,7 +548,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor()
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -688,7 +688,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor()
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 
@@ -792,7 +792,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
-	executor, err := proposal.ToExecutor()
+	executor, err := proposal.ToExecutor(true)
 	assert.NoError(t, err)
 	assert.NotNil(t, executor)
 

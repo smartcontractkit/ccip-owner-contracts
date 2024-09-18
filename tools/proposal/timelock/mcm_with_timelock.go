@@ -131,14 +131,14 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 	return nil
 }
 
-func (m *MCMSWithTimelockProposal) ToExecutor() (*mcms.Executor, error) {
+func (m *MCMSWithTimelockProposal) ToExecutor(sim bool) (*mcms.Executor, error) {
 	// Convert the proposal to an MCMS only proposal
 	mcmOnly, err := m.toMCMSOnlyProposal()
 	if err != nil {
 		return nil, err
 	}
 
-	return mcmOnly.ToExecutor()
+	return mcmOnly.ToExecutor(sim)
 }
 
 func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, error) {

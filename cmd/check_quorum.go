@@ -28,7 +28,7 @@ var CheckQuorumCmd = &cobra.Command{
 		}
 
 		// Convert proposal to executor
-		e, err := proposal.ToExecutor()
+		e, err := proposal.ToExecutor(false)
 		if err != nil {
 			return err
 		}

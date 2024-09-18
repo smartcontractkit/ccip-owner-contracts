@@ -24,9 +24,13 @@ type Executor struct {
 	ChainAgnosticOps []gethwrappers.ManyChainMultiSigOp
 }
 
-func NewProposalExecutor(proposal *MCMSProposal) (*Executor, error) {
+// NewProposalExecutor constructs a new Executor from a Proposal.
+// The executor has all the relevant metadata for onchain execution.
+// The sim flag indicates that this will be executed against a simulated chain (
+// which has a chainID of 1337).
+func NewProposalExecutor(proposal *MCMSProposal, sim bool) (*Executor, error) {
 	txCounts := calculateTransactionCounts(proposal.Transactions)
-	rootMetadatas, err := buildRootMetadatas(proposal.ChainMetadata, txCounts, proposal.OverridePreviousRoot)
+	rootMetadatas, err := buildRootMetadatas(proposal.ChainMetadata, txCounts, proposal.OverridePreviousRoot, sim)
 	if err != nil {
 		return nil, err
 	}

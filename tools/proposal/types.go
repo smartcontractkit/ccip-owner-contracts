@@ -17,7 +17,7 @@ var StringToProposalType = map[string]ProposalType{
 }
 
 type Proposal interface {
-	ToExecutor() (*mcms.Executor, error)
+	ToExecutor(sim bool) (*mcms.Executor, error)
 	AddSignature(signature mcms.Signature)
 	Validate() error
 }

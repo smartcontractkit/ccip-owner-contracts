@@ -103,9 +103,9 @@ func (m *MCMSProposal) Validate() error {
 	return nil
 }
 
-func (m *MCMSProposal) ToExecutor() (*Executor, error) {
+func (m *MCMSProposal) ToExecutor(sim bool) (*Executor, error) {
 	// Create a new executor
-	executor, err := NewProposalExecutor(m)
+	executor, err := NewProposalExecutor(m, sim)
 	if err != nil {
 		return nil, err
 	}
