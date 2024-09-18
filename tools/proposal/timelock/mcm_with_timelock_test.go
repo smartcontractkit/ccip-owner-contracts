@@ -494,8 +494,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	assert.False(t, isOperationReady)
 
 	// sleep for 5 seconds and then mine a block
-	time.Sleep(5 * time.Second)
-	sim.Commit()
+	sim.AdjustTime(5 * time.Second)
 
 	// Check that the operation is now ready
 	isOperationReady, err = timelock.IsOperationReady(&bind.CallOpts{}, operationId)
@@ -999,8 +998,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	assert.False(t, isOperationReady)
 
 	// sleep for 5 seconds and then mine a block
-	time.Sleep(5 * time.Second)
-	sim.Commit()
+	sim.AdjustTime(5 * time.Second)
 
 	// Check that the operation is now ready
 	isOperationReady, err = timelock.IsOperationReady(&bind.CallOpts{}, operationId)
