@@ -16,13 +16,13 @@ var CheckQuorumCmd = &cobra.Command{
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load proposal
-		proposal, err := LoadProposal(proposalType, proposalPath)
+		proposal, err := LoadProposal(ProposalType, ProposalPath)
 		if err != nil {
 			return err
 		}
 
 		// Dial the RPC
-		clientBackend, err := ethclient.Dial(rpc)
+		clientBackend, err := ethclient.Dial(Rpc)
 		if err != nil {
 			return err
 		}
@@ -34,7 +34,7 @@ var CheckQuorumCmd = &cobra.Command{
 		}
 
 		// Check quorum
-		quorumMet, err := e.CheckQuorum(clientBackend, mcms.ChainIdentifier(chainSelector))
+		quorumMet, err := e.CheckQuorum(clientBackend, mcms.ChainIdentifier(ChainSelector))
 		if err != nil {
 			return err
 		}
