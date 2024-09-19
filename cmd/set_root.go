@@ -27,13 +27,13 @@ var SetMerkleCmd = &cobra.Command{
 		}
 
 		// Load proposal
-		proposal, err := LoadProposal(proposalType, proposalPath)
+		proposal, err := LoadProposal(ProposalType, ProposalPath)
 		if err != nil {
 			return err
 		}
 
 		// Dial the RPC
-		clientBackend, err := ethclient.Dial(rpc)
+		clientBackend, err := ethclient.Dial(Rpc)
 		if err != nil {
 			return err
 		}
@@ -45,7 +45,7 @@ var SetMerkleCmd = &cobra.Command{
 		}
 
 		// Get EVM chain ID
-		chain, exists := chain_selectors.ChainBySelector(chainSelector)
+		chain, exists := chain_selectors.ChainBySelector(ChainSelector)
 		if !exists {
 			return errors.New("chain not found")
 		}
@@ -57,7 +57,7 @@ var SetMerkleCmd = &cobra.Command{
 		}
 
 		// Set the root on chain
-		transaction, err := e.SetRootOnChain(clientBackend, auth, mcms.ChainIdentifier(chainSelector))
+		transaction, err := e.SetRootOnChain(clientBackend, auth, mcms.ChainIdentifier(ChainSelector))
 		if err != nil {
 			return err
 		}
