@@ -9,14 +9,14 @@ import (
 
 func Test_ExecuteChainCommand(t *testing.T) {
 	actual := new(bytes.Buffer)
-	rootCmd.SetOut(actual)
-	rootCmd.SetErr(actual)
-	rootCmd.SetArgs([]string{"execute-chain", "--rpc", "http://localhost:8545", "--proposal", "./proposal.json", "--selector", "1"})
-	rootCmd.Execute()
+	RootCmd.SetOut(actual)
+	RootCmd.SetErr(actual)
+	RootCmd.SetArgs([]string{"execute-chain", "--rpc", "http://localhost:8545", "--proposal", "./proposal.json", "--selector", "1"})
+	RootCmd.Execute()
 
-	assert.Equal(t, "http://localhost:8545", rpc)
-	assert.Equal(t, "./proposal.json", proposalPath)
-	assert.Equal(t, uint64(1), chainSelector)
+	assert.Equal(t, "http://localhost:8545", Rpc)
+	assert.Equal(t, "./proposal.json", ProposalPath)
+	assert.Equal(t, uint64(1), ChainSelector)
 
 	expectedDescription := "help for execute"
 	assert.Containsf(t, actual.String(), expectedDescription, "expected description to contain '%s'", expectedDescription)

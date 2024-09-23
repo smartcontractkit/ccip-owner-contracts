@@ -18,6 +18,7 @@ var SignPrivateKeyCmd = &cobra.Command{
 
 		// Load proposal
 		p, err := LoadProposal(proposalType, proposalPath)
+
 		if err != nil {
 			return err
 		}
@@ -28,7 +29,7 @@ var SignPrivateKeyCmd = &cobra.Command{
 		}
 
 		// Write proposal to file
-		err = WriteProposalToFile(p, proposalPath)
+		err = WriteProposalToFile(p, ProposalPath)
 		if err != nil {
 			return err
 		}

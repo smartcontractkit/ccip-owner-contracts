@@ -26,13 +26,13 @@ var ExecuteChainCmd = &cobra.Command{
 		}
 
 		// Load proposal
-		proposal, err := LoadProposal(proposalType, proposalPath)
+		proposal, err := LoadProposal(ProposalType, ProposalPath)
 		if err != nil {
 			return err
 		}
 
 		// Dial the RPC
-		clientBackend, err := ethclient.Dial(rpc)
+		clientBackend, err := ethclient.Dial(Rpc)
 		if err != nil {
 			return err
 		}
@@ -44,7 +44,7 @@ var ExecuteChainCmd = &cobra.Command{
 		}
 
 		// Get EVM chain ID
-		chain, exists := chain_selectors.ChainBySelector(chainSelector)
+		chain, exists := chain_selectors.ChainBySelector(ChainSelector)
 		if !exists {
 			return errors.New("chain not found")
 		}
@@ -56,7 +56,7 @@ var ExecuteChainCmd = &cobra.Command{
 		}
 
 		for i, op := range e.Proposal.Transactions {
-			if op.ChainIdentifier == mcms.ChainIdentifier(chainSelector) {
+			if op.ChainIdentifier == mcms.ChainIdentifier(ChainSelector) {
 				transaction, err := e.ExecuteOnChain(clientBackend, auth, i)
 				if err != nil {
 					return err
