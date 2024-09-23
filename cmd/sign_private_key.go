@@ -17,7 +17,7 @@ var SignPrivateKeyCmd = &cobra.Command{
 		}
 
 		// Load proposal
-		p, err := LoadProposal(proposalType, proposalPath)
+		p, err := LoadProposal(ProposalType, ProposalPath)
 
 		if err != nil {
 			return err
