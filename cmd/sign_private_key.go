@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/signing"
+	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +22,7 @@ var SignPrivateKeyCmd = &cobra.Command{
 			return err
 		}
 
-		err = signing.SignPlainKey(pk, proposal)
+		err = proposal.SignPlainKey(pk, proposal)
 		if err != nil {
 			return err
 		}

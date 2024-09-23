@@ -1,5 +1,6 @@
 package cmd
 
+/*
 import (
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/signing"
 	"github.com/spf13/cobra"
@@ -42,3 +43,4 @@ var SignLedgerCmd = &cobra.Command{
 func init() {
 	SignLedgerCmd.Flags().UintSliceVar(&derivationPath, "derivation-path", []uint{44, 60, 0, 0, 0}, "Derivation path for the Ledger")
 }
+*/
