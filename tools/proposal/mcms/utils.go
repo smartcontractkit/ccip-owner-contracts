@@ -1,7 +1,6 @@
 package mcms
 
 import (
-	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -10,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/configwrappers"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 )
@@ -111,41 +109,5 @@ func WriteProposalToFile(proposal interface{}, filePath string) error {
 		return err
 	}
 
-	return nil
-}
-
-// Just run this locally to sign from the ledger.
-func SignPlainKey(privateKey *ecdsa.PrivateKey, proposal MCMSProposal) error {
-	// Validate proposal
-	err := proposal.Validate()
-	if err != nil {
-		return err
-	}
-
-	executor, err := proposal.ToExecutor(false) // TODO: pass in a real backend
-	if err != nil {
-		return err
-	}
-
-	// Get the signing hash
-	payload, err := executor.SigningHash()
-	if err != nil {
-		return err
-	}
-
-	// Sign the payload
-	sig, err := crypto.Sign(payload.Bytes(), privateKey)
-	if err != nil {
-		return err
-	}
-
-	// Unmarshal signature
-	sigObj, err := NewSignatureFromBytes(sig)
-	if err != nil {
-		return err
-	}
-
-	// Add signature to proposal
-	proposal.AddSignature(sigObj)
 	return nil
 }

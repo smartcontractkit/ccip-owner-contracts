@@ -17,18 +17,18 @@ var SignPrivateKeyCmd = &cobra.Command{
 		}
 
 		// Load proposal
-		proposal, err := LoadProposal(proposalType, proposalPath)
+		p, err := LoadProposal(proposalType, proposalPath)
 		if err != nil {
 			return err
 		}
 
-		err = proposal.SignPlainKey(pk, proposal)
+		err = proposal.SignPlainKey(pk, p)
 		if err != nil {
 			return err
 		}
 
 		// Write proposal to file
-		err = WriteProposalToFile(proposal, proposalPath)
+		err = WriteProposalToFile(p, proposalPath)
 		if err != nil {
 			return err
 		}
