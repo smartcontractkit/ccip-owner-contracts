@@ -1,10 +1,6 @@
 package signing
 
 import (
-
-	// NOTE MUST BE > 1.14 for this fix
-	// https://github.com/ethereum/go-ethereum/pull/28945
-
 	"github.com/ethereum/go-ethereum/accounts/usbwallet"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"

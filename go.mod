@@ -3,7 +3,7 @@ module github.com/smartcontractkit/ccip-owner-contracts
 go 1.22
 
 require (
-	github.com/ethereum/go-ethereum v1.14.7
+	github.com/ethereum/go-ethereum v1.13.8
 	github.com/joho/godotenv v1.5.1
 	github.com/smartcontractkit/chain-selectors v1.0.23
 	github.com/spf13/cobra v1.5.0

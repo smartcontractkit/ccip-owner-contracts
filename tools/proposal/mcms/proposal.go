@@ -60,6 +60,15 @@ func NewProposal(
 	return &proposal, nil
 }
 
+func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
+	var out MCMSProposal
+	err := FromFile(filePath, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 func (m *MCMSProposal) Validate() error {
 	if m.Version == "" {
 		return &errors.ErrInvalidVersion{
