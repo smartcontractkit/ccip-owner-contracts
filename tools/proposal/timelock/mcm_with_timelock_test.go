@@ -20,6 +20,7 @@ import (
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var TestAddress = common.HexToAddress("0x1234567890abcdef")
@@ -496,7 +497,8 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	assert.False(t, isOperationReady)
 
 	// sleep for 5 seconds and then mine a block
-	sim.AdjustTime(5 * time.Second)
+	require.NoError(t, sim.AdjustTime(5*time.Second))
+	sim.Commit() // Note < 1.14 geth needs a commit after adjusting time.
 
 	// Check that the operation is now ready
 	isOperationReady, err = timelock.IsOperationReady(&bind.CallOpts{}, operationId)
@@ -1000,7 +1002,8 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	assert.False(t, isOperationReady)
 
 	// sleep for 5 seconds and then mine a block
-	sim.AdjustTime(5 * time.Second)
+	require.NoError(t, sim.AdjustTime(5*time.Second))
+	sim.Commit()
 
 	// Check that the operation is now ready
 	isOperationReady, err = timelock.IsOperationReady(&bind.CallOpts{}, operationId)
