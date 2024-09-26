@@ -15,8 +15,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/smartcontractkit/ccip-owner-contracts/pkg/config"
 	mcm_errors "github.com/smartcontractkit/ccip-owner-contracts/pkg/errors"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/gethwrappers"
 	"github.com/smartcontractkit/ccip-owner-contracts/pkg/proposal/mcms"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 	"github.com/stretchr/testify/assert"
 )
 

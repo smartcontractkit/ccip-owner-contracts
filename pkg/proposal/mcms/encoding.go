@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/smartcontractkit/ccip-owner-contracts/pkg/errors"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/gethwrappers"
 	"github.com/smartcontractkit/ccip-owner-contracts/pkg/merkle"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 )
 

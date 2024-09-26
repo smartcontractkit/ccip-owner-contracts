@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/smartcontractkit/ccip-owner-contracts/pkg/errors"
+	owner "github.com/smartcontractkit/ccip-owner-contracts/pkg/gethwrappers"
 	"github.com/smartcontractkit/ccip-owner-contracts/pkg/proposal/mcms"
-	owner "github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 )
 
 var ZERO_HASH = common.Hash{}

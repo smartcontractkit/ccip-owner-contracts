@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/smartcontractkit/ccip-owner-contracts/pkg/errors"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/gethwrappers"
 	"github.com/stretchr/testify/assert"
 )
 

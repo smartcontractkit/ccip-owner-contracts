@@ -11,8 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	c "github.com/smartcontractkit/ccip-owner-contracts/pkg/config"
 	"github.com/smartcontractkit/ccip-owner-contracts/pkg/errors"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/gethwrappers"
 	"github.com/smartcontractkit/ccip-owner-contracts/pkg/merkle"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 	"golang.org/x/exp/slices"
 )
 
