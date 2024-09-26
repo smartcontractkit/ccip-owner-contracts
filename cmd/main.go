@@ -70,9 +70,9 @@ func WriteProposalToFile(proposal interface{}, filePath string) error {
 }
 
 var SignLedgerCmd = &cobra.Command{
-	Use:   "sign-pk",
-	Short: "Sign a proposal with a private key",
-	Long:  `Configure a private key in a .env file (using the PRIVATE_KEY var) and sign a proposal with it.`,
+	Use:   "sign-ledger",
+	Short: "Sign a proposal with a ledger",
+	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load proposal
 		proposal, err := proposal.LoadProposal(proposalType, proposalPath)
