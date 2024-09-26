@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/proposal/mcms"
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 )
 

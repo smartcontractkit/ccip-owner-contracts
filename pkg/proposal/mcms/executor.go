@@ -9,10 +9,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/configwrappers"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/merkle"
+	c "github.com/smartcontractkit/ccip-owner-contracts/pkg/config"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/errors"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/gethwrappers"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/merkle"
 	"golang.org/x/exp/slices"
 )
 
@@ -184,8 +184,8 @@ func (e *Executor) CheckQuorum(client bind.ContractBackend, chain ChainIdentifie
 
 	// spread the signers to get address from the configuration
 	var contractSigners []common.Address
-	for _, c := range config.Signers {
-		contractSigners = append(contractSigners, c.Addr)
+	for _, s := range config.Signers {
+		contractSigners = append(contractSigners, s.Addr)
 	}
 
 	// Validate that all signers are valid
@@ -201,12 +201,12 @@ func (e *Executor) CheckQuorum(client bind.ContractBackend, chain ChainIdentifie
 
 	// Validate if the quorum is met
 
-	c, err := configwrappers.NewConfigFromRaw(config)
+	newConfig, err := c.NewConfigFromRaw(config)
 	if err != nil {
 		return false, err
 	}
 
-	if !isReadyToSetRoot(*c, recoveredSigners) {
+	if !isReadyToSetRoot(*newConfig, recoveredSigners) {
 		return false, &errors.ErrQuorumNotMet{
 			ChainIdentifier: uint64(chain),
 		}
@@ -272,11 +272,11 @@ func (e *Executor) ValidateSignatures(clients map[ChainIdentifier]ContractDeploy
 	return true, nil
 }
 
-func isReadyToSetRoot(rootGroup configwrappers.Config, recoveredSigners []common.Address) bool {
+func isReadyToSetRoot(rootGroup c.Config, recoveredSigners []common.Address) bool {
 	return isGroupAtConsensus(rootGroup, recoveredSigners)
 }
 
-func isGroupAtConsensus(group configwrappers.Config, recoveredSigners []common.Address) bool {
+func isGroupAtConsensus(group c.Config, recoveredSigners []common.Address) bool {
 	signerApprovalsInGroup := 0
 	for _, signer := range group.Signers {
 		for _, recoveredSigner := range recoveredSigners {

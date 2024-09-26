@@ -7,8 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/configwrappers"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/config"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/gethwrappers"
 )
 
 type ContractDeployBackend interface {
@@ -40,10 +40,10 @@ func transformHashes(hashes []common.Hash) [][32]byte {
 	return m
 }
 
-func transformMCMSConfigs(configs map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig) (map[ChainIdentifier]*configwrappers.Config, error) {
-	m := make(map[ChainIdentifier]*configwrappers.Config)
+func transformMCMSConfigs(configs map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig) (map[ChainIdentifier]*config.Config, error) {
+	m := make(map[ChainIdentifier]*config.Config)
 	for k, v := range configs {
-		config, err := configwrappers.NewConfigFromRaw(v)
+		config, err := config.NewConfigFromRaw(v)
 		if err != nil {
 			return nil, err
 		}

@@ -1,12 +1,12 @@
-package configwrappers
+package config
 
 import (
 	"math/big"
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/errors"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/gethwrappers"
 )
 
 // Config is a struct that holds all the configuration for the owner contracts

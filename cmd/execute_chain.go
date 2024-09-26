@@ -5,7 +5,7 @@ import (
 	"log"
 	"math/big"
 
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/proposal/mcms"
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/spf13/cobra"
 

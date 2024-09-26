@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/proposal"
 	"github.com/spf13/cobra"
 )
 

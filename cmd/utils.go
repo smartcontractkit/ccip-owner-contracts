@@ -8,9 +8,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/joho/godotenv"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/timelock"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/proposal"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/proposal/mcms"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/proposal/timelock"
 )
 
 func LoadPrivateKey() (*ecdsa.PrivateKey, error) {
