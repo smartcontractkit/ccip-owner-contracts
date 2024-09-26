@@ -83,7 +83,7 @@ Proposal types all contain a relevant `Validate()` function that can be used to 
 
 ### Proposal Signing
 
-`go run cmd/main.go --help`
+`cd cmd && go run main.go --help`
 
 ### Proposal Execution
 
