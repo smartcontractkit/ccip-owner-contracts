@@ -1,11 +1,11 @@
-package configwrappers
+package config
 
 import (
 	"math/big"
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/errors"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
 )
 

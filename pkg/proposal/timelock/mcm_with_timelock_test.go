@@ -13,10 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/configwrappers"
-	mcm_errors "github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/config"
+	mcm_errors "github.com/smartcontractkit/ccip-owner-contracts/pkg/errors"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/proposal/mcms"
 	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -231,10 +231,10 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 	}
 
 	// Set the config
-	config := &configwrappers.Config{
+	config := &config.Config{
 		Quorum:       uint8(numSigners),
 		Signers:      signers,
-		GroupSigners: []configwrappers.Config{},
+		GroupSigners: []config.Config{},
 	}
 	quorums, parents, signersAddresses, signerGroups := config.ExtractSetConfigInputs()
 

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/signing"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/signing"
 	"github.com/spf13/cobra"
 )
 
