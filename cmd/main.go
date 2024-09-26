@@ -40,13 +40,13 @@ var SignPrivateKeyCmd = &cobra.Command{
 			return err
 		}
 
-		err = SignPlainKey(pk, p)
+		err = proposal.SignPlainKey(pk, p)
 		if err != nil {
 			return err
 		}
 
 		// Write proposal to file
-		err = WriteProposalToFile(p, ProposalPath)
+		err = WriteProposalToFile(p, proposalPath)
 		if err != nil {
 			return err
 		}
