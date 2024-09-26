@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 
+	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/usbwallet"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/joho/godotenv"
@@ -19,7 +21,7 @@ var (
 	proposalPath string
 	proposalType proposal.ProposalType
 	// Ledger only
-	derivationPath []uint
+	derivationPath string
 )
 
 var SignPrivateKeyCmd = &cobra.Command{
@@ -80,23 +82,23 @@ var SignLedgerCmd = &cobra.Command{
 			return err
 		}
 
-		// convert derivation path to []uint32
-		derivationPathUint32 := make([]uint32, len(derivationPath))
-		for i, v := range derivationPath {
-			derivationPathUint32[i] = uint32(v)
+		// Parse the derivation path
+		path, err := accounts.ParseDerivationPath(derivationPath)
+		if err != nil {
+			log.Fatalf("Failed to parse derivation path: %v", err)
 		}
 
-		err = SignLedger(derivationPathUint32, proposal)
+		err = SignLedger(path, proposal)
 		if err != nil {
 			return err
 		}
-
-		// Write proposal to file
-		err = WriteProposalToFile(proposal, proposalPath)
-		if err != nil {
-			return err
-		}
-
+		//
+		//// Write proposal to file
+		//err = WriteProposalToFile(proposal, proposalPath)
+		//if err != nil {
+		//	return err
+		//}
+		//
 		return nil
 	},
 }
@@ -126,44 +128,58 @@ func SignLedger(derivationPath []uint32, proposal proposal.Proposal) error {
 	// Validate proposal
 	err := proposal.Validate()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to validate proposal: %w", err)
 	}
 
 	// Load ledger
 	ledgerhub, err := usbwallet.NewLedgerHub()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open ledger hub: %w", err)
 	}
 
 	// Get the first wallet
 	wallets := ledgerhub.Wallets()
+	if len(wallets) == 0 {
+		return errors.New("no wallets found")
+	}
 	wallet := wallets[0]
 
-	// Create executor
-	executor, err := proposal.ToExecutor(false) // TODO: pass in a real backend
-	if err != nil {
-		return err
-	}
+	fmt.Printf("Found %d wallets, using first one\n",
+		len(wallets))
 
 	// Open the ledger.
-	_ = wallet.Open("")
+	err = wallet.Open("")
+	if err != nil {
+		return fmt.Errorf("failed to open wallet: %w", err)
+	}
+
+	fmt.Printf("Opened wallet, have accounts %v\n", wallet.Accounts())
 
 	// Load account.
 	// BIP44 derivation path used in ledger.
 	// Could pass this in as an argument as well.
 	account, err := wallet.Derive(derivationPath, true)
 	if err != nil {
+		return fmt.Errorf("failed to derive account: %w derivation path %v"+
+			" is your ledger ethereum app open?", err, derivationPath)
+	}
+	fmt.Println("Found account: ", account.Address.String())
+
+	// Get the signing hash
+
+	// Create executor
+	executor, err := proposal.ToExecutor(false)
+	if err != nil {
 		return err
 	}
 
-	// Get the signing hash
 	payload, err := executor.SigningHash()
 	if err != nil {
 		return err
 	}
 
 	// Sign the payload
-	sig, err := wallet.SignData(account, "", payload.Bytes())
+	sig, err := wallet.SignData(account, accounts.MimetypeTypedData, payload.Bytes())
 	if err != nil {
 		return err
 	}
@@ -188,6 +204,12 @@ func SignLedger(derivationPath []uint32, proposal proposal.Proposal) error {
 
 func main() {
 	rootCmd := cobra.Command{}
+	rootCmd.PersistentFlags().StringVar(&proposalPath, "proposal", "p", "Absolute file path containing the proposal to be submitted")
+	var proposalTypeStr string
+	rootCmd.PersistentFlags().StringVar(&proposalTypeStr, "proposalType", string(proposal.MCMS), "The type of proposal being ingested")
+	proposalType = proposal.StringToProposalType[proposalTypeStr]
+
+	SignLedgerCmd.PersistentFlags().StringVar(&derivationPath, "derivationPath", "m/44'/60'/0'/0/0", "The type of proposal being ingested")
 	rootCmd.AddCommand(SignLedgerCmd)
 	rootCmd.AddCommand(SignPrivateKeyCmd)
 

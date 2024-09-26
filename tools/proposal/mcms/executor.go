@@ -57,6 +57,17 @@ func (e *Executor) SigningHash() (common.Hash, error) {
 	return toEthSignedMessageHash(hashToSign), nil
 }
 
+func (e *Executor) SigningMessage() ([]byte, error) {
+	var validUntilBytes [32]byte
+	binary.BigEndian.PutUint32(validUntilBytes[28:], e.Proposal.ValidUntil) // Place the uint32 in the last 4 bytes
+
+	hashToSign := crypto.Keccak256Hash(e.Tree.Root.Bytes(), validUntilBytes[:])
+
+	prefix := []byte("\x19Ethereum Signed Message:\n32")
+	data := append(prefix, hashToSign.Bytes()...)
+	return data, nil
+}
+
 func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
 	// Add the Ethereum signed message prefix
 	prefix := []byte("\x19Ethereum Signed Message:\n32")
