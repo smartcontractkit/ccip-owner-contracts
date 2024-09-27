@@ -1,4 +1,4 @@
-package configwrappers
+package config
 
 import (
 	"testing"

@@ -42,10 +42,10 @@ func transformHashes(hashes []common.Hash) [][32]byte {
 	return m
 }
 
-func transformMCMSConfigs(configs map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig) (map[ChainIdentifier]*configwrappers.Config, error) {
-	m := make(map[ChainIdentifier]*configwrappers.Config)
+func transformMCMSConfigs(configs map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig) (map[ChainIdentifier]*config.Config, error) {
+	m := make(map[ChainIdentifier]*config.Config)
 	for k, v := range configs {
-		config, err := configwrappers.NewConfigFromRaw(v)
+		config, err := config.NewConfigFromRaw(v)
 		if err != nil {
 			return nil, err
 		}
