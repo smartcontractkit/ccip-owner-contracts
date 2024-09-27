@@ -161,6 +161,10 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	hash, err := executor.SigningHash()
 	assert.NoError(t, err)
 
+	// Get the message to sign
+	_, err = executor.SigningMessage()
+	assert.NoError(t, err)
+
 	// Sign the hash
 	sig, err := crypto.Sign(hash.Bytes(), keys[0])
 	assert.NoError(t, err)
