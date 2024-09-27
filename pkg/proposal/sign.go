@@ -4,7 +4,7 @@ import (
 	"crypto/ecdsa"
 
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/proposal/mcms"
 )
 
 // Just run this locally to sign from the ledger.

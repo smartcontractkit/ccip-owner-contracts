@@ -9,10 +9,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/configwrappers"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/errors"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/gethwrappers"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/merkle"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/config"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/errors"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/gethwrappers"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/merkle"
 	"golang.org/x/exp/slices"
 )
 

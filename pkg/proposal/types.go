@@ -3,8 +3,8 @@ package proposal
 import (
 	"errors"
 
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/mcms"
-	"github.com/smartcontractkit/ccip-owner-contracts/tools/proposal/timelock"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/proposal/mcms"
+	"github.com/smartcontractkit/ccip-owner-contracts/pkg/proposal/timelock"
 )
 
 type ProposalType string
