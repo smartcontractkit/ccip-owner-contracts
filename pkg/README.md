@@ -48,11 +48,7 @@ This configuration represents a membership structure that requires 3 entities to
 11. [`0x2`, `0x4`, `0x5`]
 12. [`0x2`, `0x4`, `0x6`]
 
-<<<<<<< HEAD
-Once a satisfactory MCMS Membership configuration is constructed, users can use the [`ExtractSetConfigInputs`](config/config.go#L153) function to generate inputs and call [`SetConfig`](./gethwrappers/ManyChainMultiSig.go#L428)
-=======
 Once a satisfactory MCMS Membership configuration is constructed, users can use the [`ExtractSetConfigInputs`](./config/config.go#L153) function to generate inputs and call [`SetConfig`](./gethwrappers/ManyChainMultiSig.go#L428)
->>>>>>> develop
 
 Note: Signers cannot be repeated in this configuration (i.e. they cannot belong to multiple groups)
 
