@@ -70,6 +70,15 @@ func NewMCMSWithTimelockProposal(
 	return &proposal, nil
 }
 
+func NewMCMSWithTimelockProposalFromFile(filePath string) (*MCMSWithTimelockProposal, error) {
+	var out MCMSWithTimelockProposal
+	err := mcms.FromFile(filePath, &out)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 func (m *MCMSWithTimelockProposal) Validate() error {
 	if m.Version == "" {
 		return &errors.ErrInvalidVersion{

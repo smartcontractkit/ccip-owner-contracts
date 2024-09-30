@@ -1,7 +1,9 @@
 package mcms
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -77,4 +79,35 @@ func ABIDecode(abiStr string, data []byte) ([]interface{}, error) {
 		return nil, err
 	}
 	return inAbi.Unpack("method", data)
+}
+
+// Generic function to read a file and unmarshal its contents into the provided struct
+func FromFile(filePath string, out interface{}) error {
+	// Load file from path
+	fileBytes, err := os.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal JSON into the provided struct
+	err = json.Unmarshal(fileBytes, out)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func WriteProposalToFile(proposal interface{}, filePath string) error {
+	proposalBytes, err := json.Marshal(proposal)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filePath, proposalBytes, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

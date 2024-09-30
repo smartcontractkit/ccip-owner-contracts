@@ -57,6 +57,10 @@ func (e *Executor) SigningHash() (common.Hash, error) {
 	return toEthSignedMessageHash(hashToSign), nil
 }
 
+func (e *Executor) SigningMessage() ([]byte, error) {
+	return ABIEncode(`[{"type":"bytes32"},{"type":"uint32"}]`, e.Tree.Root, e.Proposal.ValidUntil)
+}
+
 func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
 	// Add the Ethereum signed message prefix
 	prefix := []byte("\x19Ethereum Signed Message:\n32")

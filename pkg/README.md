@@ -83,10 +83,7 @@ Proposal types all contain a relevant `Validate()` function that can be used to 
 
 ### Proposal Signing
 
-This library also exposed two types of signing functions to help sign proposals: 
-
-1. [`SignPlainKey`](./signing/sign_plain_key.go#L17): Accepts a private key and a filePath where a proposal is defined, signs the proposal, and updates the file at the same file path
-2. `SignLedger`: Accepts a ledger derivation path and a file path where a proposal is defined, signs the proposal, and updates the file at the same file path
+`cd cmd && go run main.go --help`
 
 ### Proposal Execution
 

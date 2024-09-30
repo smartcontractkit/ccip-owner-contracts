@@ -2,8 +2,10 @@ package timelock
 
 import (
 	"crypto/ecdsa"
+	"encoding/json"
 	"errors"
 	"math/big"
+	"os"
 	"testing"
 	"time"
 
@@ -18,6 +20,7 @@ import (
 	"github.com/smartcontractkit/ccip-owner-contracts/pkg/gethwrappers"
 	"github.com/smartcontractkit/ccip-owner-contracts/pkg/proposal/mcms"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var TestAddress = common.HexToAddress("0x1234567890abcdef")
@@ -494,8 +497,8 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	assert.False(t, isOperationReady)
 
 	// sleep for 5 seconds and then mine a block
-	time.Sleep(5 * time.Second)
-	sim.Commit()
+	require.NoError(t, sim.AdjustTime(5*time.Second))
+	sim.Commit() // Note < 1.14 geth needs a commit after adjusting time.
 
 	// Check that the operation is now ready
 	isOperationReady, err = timelock.IsOperationReady(&bind.CallOpts{}, operationId)
@@ -999,7 +1002,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	assert.False(t, isOperationReady)
 
 	// sleep for 5 seconds and then mine a block
-	time.Sleep(5 * time.Second)
+	require.NoError(t, sim.AdjustTime(5*time.Second))
 	sim.Commit()
 
 	// Check that the operation is now ready
@@ -1382,4 +1385,33 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 	hasRole, err = timelock.HasRole(&bind.CallOpts{}, cancellerRole, auths[0].From)
 	assert.NoError(t, err)
 	assert.True(t, hasRole)
+}
+
+func TestTimelockProposalFromFile(t *testing.T) {
+	mcmsProposal := MCMSWithTimelockProposal{
+		MCMSProposal: mcms.MCMSProposal{
+			Version:              "1",
+			ValidUntil:           100,
+			Signatures:           []mcms.Signature{},
+			OverridePreviousRoot: false,
+			Description:          "Test Proposal",
+			ChainMetadata:        make(map[mcms.ChainIdentifier]mcms.ChainMetadata),
+		},
+		TimelockAddresses: make(map[mcms.ChainIdentifier]common.Address),
+		Transactions:      make([]BatchChainOperation, 0),
+		Operation:         Schedule,
+		MinDelay:          "1h",
+	}
+
+	tempFile, err := os.CreateTemp("", "timelock.json")
+	assert.NoError(t, err)
+
+	proposalBytes, err := json.Marshal(mcmsProposal)
+	assert.NoError(t, err)
+	err = os.WriteFile(tempFile.Name(), proposalBytes, 0644)
+	assert.NoError(t, err)
+
+	fileProposal, err := NewMCMSWithTimelockProposalFromFile(tempFile.Name())
+	assert.NoError(t, err)
+	assert.Equal(t, mcmsProposal, *fileProposal)
 }
