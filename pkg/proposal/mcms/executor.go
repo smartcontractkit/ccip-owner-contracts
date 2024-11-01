@@ -47,12 +47,10 @@ func NewProposalExecutor(proposal *MCMSProposal, sim bool) (*Executor, error) {
 	}, err
 }
 
+// SigningHash is used in non-ledger contexts, where
+// the EIP191 prefix is already applied, and it can be
+// signed directly with raw private key.
 func (e *Executor) SigningHash() (common.Hash, error) {
-	// Convert validUntil to [32]byte
-	//var validUntilBytes [32]byte
-	//binary.BigEndian.PutUint32(validUntilBytes[28:], e.Proposal.ValidUntil) // Place the uint32 in the last 4 bytes
-	//
-	//hashToSign := crypto.Keccak256Hash(e.Tree.Root.Bytes(), validUntilBytes[:])
 	m, err := e.SigningMessage()
 	if err != nil {
 		return common.Hash{}, err
@@ -60,7 +58,10 @@ func (e *Executor) SigningHash() (common.Hash, error) {
 	return toEthSignedMessageHash(m), nil
 }
 
-// SigningMessage in our case is _always_ a pre-hashed message.
+// SigningMessage is used for ledger contexts where the ledger itself
+// will apply the EIP191 prefix.
+// Corresponds to the input here
+// https://github.com/smartcontractkit/ccip-owner-contracts/blob/main/src/ManyChainMultiSig.sol#L202
 func (e *Executor) SigningMessage() ([32]byte, error) {
 	msg, err := ABIEncode(`[{"type":"bytes32"},{"type":"uint32"}]`, e.Tree.Root, e.Proposal.ValidUntil)
 	if err != nil {
