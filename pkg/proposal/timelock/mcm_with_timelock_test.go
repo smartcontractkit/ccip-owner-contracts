@@ -6,15 +6,19 @@ import (
 	"errors"
 	"math/big"
 	"os"
+	"regexp"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/smartcontractkit/ccip-owner-contracts/pkg/config"
 	mcm_errors "github.com/smartcontractkit/ccip-owner-contracts/pkg/errors"
 	"github.com/smartcontractkit/ccip-owner-contracts/pkg/gethwrappers"
@@ -27,6 +31,33 @@ var TestAddress = common.HexToAddress("0x1234567890abcdef")
 var TestChain1 = mcms.ChainIdentifier(3379446385462418246)
 var TestChain2 = mcms.ChainIdentifier(16015286601757825753)
 var TestChain3 = mcms.ChainIdentifier(10344971235874465080)
+
+func parseError(err error) string {
+	if err == nil {
+		return ""
+	}
+	var d rpc.DataError
+	ok := errors.As(err, &d)
+	if !ok {
+		return err.Error()
+	}
+	// Looking for error data like 0xaabbccdd
+	regex := regexp.MustCompile(`0x[a-fA-F0-9]{8}`)
+	// Find all matches
+	matches := regex.FindAllString(d.ErrorData().(string), -1)
+	if len(matches) == 1 {
+		mcmsABI, _ := abi.JSON(strings.NewReader(gethwrappers.ManyChainMultiSigABI))
+		timelockABI, _ := abi.JSON(strings.NewReader(gethwrappers.RBACTimelockABI))
+		for _, abi := range []*abi.ABI{&mcmsABI, &timelockABI} {
+			for _, abierr := range abi.Errors {
+				if abierr.ID.String()[:10] == matches[0] {
+					return abierr.Name
+				}
+			}
+		}
+	}
+	return ""
+}
 
 func TestValidate_ValidProposal(t *testing.T) {
 	proposal, err := NewMCMSWithTimelockProposal(
@@ -363,6 +394,7 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 }
 
 func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
+	// TODO: test harness object?
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	assert.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -370,7 +402,13 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	assert.NotNil(t, sim)
 	assert.NotNil(t, mcmsObj)
 	assert.NotNil(t, timelock)
+	// As long as valid until is different, we can re-run the exact same proposal.
+	for i, v := range []uint32{2004259681, 2004259682} {
+		runValidScheduleAndExecuteProposalOneTx(t, keys, auths, sim, mcmsObj, timelock, v, uint64(i))
+	}
+}
 
+func runValidScheduleAndExecuteProposalOneTx(t *testing.T, keys []*ecdsa.PrivateKey, auths []*bind.TransactOpts, sim *backends.SimulatedBackend, mcmsObj *gethwrappers.ManyChainMultiSig, timelock *gethwrappers.RBACTimelock, v uint32, opCount uint64) {
 	// Construct example transaction to grant EOA the PROPOSER role
 	role, err := timelock.PROPOSERROLE(&bind.CallOpts{})
 	assert.NoError(t, err)
@@ -380,19 +418,21 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Validate Contract State and verify role does not exist
-	hasRole, err := timelock.HasRole(&bind.CallOpts{}, role, auths[0].From)
-	assert.NoError(t, err)
-	assert.False(t, hasRole)
+	if opCount == 0 {
+		hasRole, err := timelock.HasRole(&bind.CallOpts{}, role, auths[0].From)
+		assert.NoError(t, err)
+		assert.False(t, hasRole)
+	}
 
 	// Construct example transaction
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
-		2004259681,
+		v,
 		[]mcms.Signature{},
 		false,
 		map[mcms.ChainIdentifier]mcms.ChainMetadata{
 			TestChain1: {
-				StartingOpCount: 0,
+				StartingOpCount: opCount,
 				MCMAddress:      mcmsObj.Address(),
 			},
 		},
@@ -445,10 +485,18 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	assert.NoError(t, err)
 
 	// SetRoot on the contract
+	auths[0].GasLimit = 0
+	auths[0].GasPrice = nil
 	tx, err := executor.SetRootOnChain(sim, auths[0], TestChain1)
-	assert.NoError(t, err)
+	require.NoError(t, err, parseError(err))
 	assert.NotNil(t, tx)
 	sim.Commit()
+
+	// Wait for the transaction to be mined
+	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
+	assert.NoError(t, err)
+	assert.NotNil(t, receipt)
+	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 
 	// Validate Contract State and verify root was set
 	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
@@ -463,7 +511,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	sim.Commit()
 
 	// Wait for the transaction to be mined
-	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
+	receipt, err = bind.WaitMined(auths[0].Context, sim, tx)
 	assert.NoError(t, err)
 	assert.NotNil(t, receipt)
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
@@ -528,7 +576,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	assert.False(t, isOperationPending)
 
 	// Validate Contract State and verify role was granted
-	hasRole, err = timelock.HasRole(&bind.CallOpts{}, role, auths[0].From)
+	hasRole, err := timelock.HasRole(&bind.CallOpts{}, role, auths[0].From)
 	assert.NoError(t, err)
 	assert.True(t, hasRole)
 }
