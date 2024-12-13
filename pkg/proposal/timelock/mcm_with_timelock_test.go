@@ -27,6 +27,7 @@ var TestAddress = common.HexToAddress("0x1234567890abcdef")
 var TestChain1 = mcms.ChainIdentifier(3379446385462418246)
 var TestChain2 = mcms.ChainIdentifier(16015286601757825753)
 var TestChain3 = mcms.ChainIdentifier(10344971235874465080)
+var ONE_HASH = [32]byte{0x01}
 
 func TestValidate_ValidProposal(t *testing.T) {
 	proposal, err := NewMCMSWithTimelockProposal(
@@ -60,6 +61,7 @@ func TestValidate_ValidProposal(t *testing.T) {
 		},
 		Schedule,
 		"1h",
+		ONE_HASH,
 	)
 
 	assert.NoError(t, err)
@@ -98,6 +100,7 @@ func TestValidate_InvalidOperation(t *testing.T) {
 		},
 		"invalid",
 		"1h",
+		ONE_HASH,
 	)
 
 	assert.Error(t, err)
@@ -137,6 +140,7 @@ func TestValidate_InvalidMinDelaySchedule(t *testing.T) {
 		},
 		Schedule,
 		"invalid",
+		ONE_HASH,
 	)
 
 	assert.Error(t, err)
@@ -176,6 +180,7 @@ func TestValidate_InvalidMinDelayBypassShouldBeValid(t *testing.T) {
 		},
 		Bypass,
 		"invalid",
+		ONE_HASH,
 	)
 
 	assert.NoError(t, err)
@@ -414,6 +419,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 		},
 		Schedule,
 		"5s",
+		ONE_HASH,
 	)
 	assert.NoError(t, err)
 	assert.NotNil(t, proposal)
@@ -585,6 +591,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 		},
 		Schedule,
 		"5s",
+		ONE_HASH,
 	)
 	assert.NoError(t, err)
 	assert.NotNil(t, proposal)
@@ -784,6 +791,7 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 		},
 		Bypass,
 		"",
+		ONE_HASH,
 	)
 	assert.NoError(t, err)
 	assert.NotNil(t, proposal)
@@ -909,6 +917,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 		},
 		Schedule,
 		"5s",
+		ONE_HASH,
 	)
 	assert.NoError(t, err)
 	assert.NotNil(t, proposal)
@@ -1109,6 +1118,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 		},
 		Schedule,
 		"5s",
+		ONE_HASH,
 	)
 	assert.NoError(t, err)
 	assert.NotNil(t, proposal)
@@ -1321,6 +1331,7 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 		},
 		Bypass,
 		"",
+		ONE_HASH,
 	)
 	assert.NoError(t, err)
 	assert.NotNil(t, proposal)

@@ -1,6 +1,7 @@
 package timelock
 
 import (
+	"encoding/binary"
 	"math/big"
 	"time"
 
@@ -47,6 +48,7 @@ func NewMCMSWithTimelockProposal(
 	transactions []BatchChainOperation,
 	operation TimelockOperation,
 	minDelay string,
+	salt [32]byte,
 ) (*MCMSWithTimelockProposal, error) {
 	proposal := MCMSWithTimelockProposal{
 		MCMSProposal: mcms.MCMSProposal{
@@ -61,6 +63,7 @@ func NewMCMSWithTimelockProposal(
 		MinDelay:          minDelay,
 		TimelockAddresses: timelockAddresses,
 		Transactions:      transactions,
+		Salt:              salt,
 	}
 
 	err := proposal.Validate()
@@ -170,9 +173,16 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 	}
 
 	// Convert transactions into timelock wrapped transactions
-	for _, t := range m.Transactions {
+	for i, t := range m.Transactions {
 		calls := make([]owner.RBACTimelockCall, 0)
 		tags := make([]string, 0)
+		var salt [32]byte
+		if m.Salt != ZERO_HASH {
+			salt = m.Salt
+		} else {
+			binary.BigEndian.PutUint32(salt[24:], uint32(time.Now().Unix()))
+			binary.BigEndian.PutUint32(salt[28:], uint32(i))
+		}
 		for _, op := range t.Batch {
 			calls = append(calls, owner.RBACTimelockCall{
 				Target: op.To,
@@ -189,7 +199,7 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 			return mcms.MCMSProposal{}, err
 		}
 
-		operationId, err := hashOperationBatch(calls, predecessor, m.Salt)
+		operationId, err := hashOperationBatch(calls, predecessor, salt)
 		if err != nil {
 			return mcms.MCMSProposal{}, err
 		}
@@ -198,7 +208,7 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 		var data []byte
 		switch m.Operation {
 		case Schedule:
-			data, err = abi.Pack("scheduleBatch", calls, predecessor, m.Salt, big.NewInt(int64(delay.Seconds())))
+			data, err = abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
 			if err != nil {
 				return mcms.MCMSProposal{}, err
 			}
