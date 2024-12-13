@@ -1,6 +1,7 @@
 package timelock
 
 import (
+	"encoding/binary"
 	"math/big"
 	"time"
 
@@ -172,7 +173,15 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 	for _, t := range m.Transactions {
 		calls := make([]owner.RBACTimelockCall, 0)
 		tags := make([]string, 0)
-		salt := t.Salt
+
+		// We need the salt to be unique in case
+		// you use an identical operation again on the same chain
+		// across two different proposals.
+		// Note that the predecessor protects duplicates within a
+		// proposal.
+		var salt [32]byte
+		binary.BigEndian.PutUint32(salt[:], m.ValidUntil)
+
 		for _, op := range t.Batch {
 			calls = append(calls, owner.RBACTimelockCall{
 				Target: op.To,
