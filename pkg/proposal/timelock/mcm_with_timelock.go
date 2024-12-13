@@ -170,6 +170,7 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 
 	// Convert transactions into timelock wrapped transactions
 	for _, t := range m.Transactions {
+		var salt [32]byte
 		calls := make([]owner.RBACTimelockCall, 0)
 		tags := make([]string, 0)
 		for _, op := range t.Batch {
@@ -181,7 +182,7 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 			tags = append(tags, op.Tags...)
 		}
 		predecessor := predecessorMap[t.ChainIdentifier]
-		salt := ZERO_HASH
+		copy(salt[:], t.Salt)
 		delay, _ := time.ParseDuration(m.MinDelay)
 
 		abi, err := owner.RBACTimelockMetaData.GetAbi()
