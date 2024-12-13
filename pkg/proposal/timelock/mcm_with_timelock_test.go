@@ -506,7 +506,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	assert.True(t, isOperationReady)
 
 	// Execute the operation
-	tx, err = timelock.ExecuteBatch(auths[0], grantRoleCall, ZERO_HASH, ZERO_HASH)
+	tx, err = timelock.ExecuteBatch(auths[0], grantRoleCall, ZERO_HASH, proposal.Salt())
 	assert.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
@@ -1011,7 +1011,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	assert.True(t, isOperationReady)
 
 	// Execute the operation
-	tx, err = timelock.ExecuteBatch(auths[0], grantRoleCalls, ZERO_HASH, ZERO_HASH)
+	tx, err = timelock.ExecuteBatch(auths[0], grantRoleCalls, ZERO_HASH, proposal.Salt())
 	assert.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
