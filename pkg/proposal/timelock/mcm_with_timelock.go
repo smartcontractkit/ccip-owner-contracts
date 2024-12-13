@@ -1,6 +1,7 @@
 package timelock
 
 import (
+	"encoding/binary"
 	"math/big"
 	"time"
 
@@ -33,6 +34,17 @@ type MCMSWithTimelockProposal struct {
 
 	// Overridden: Operations to be executed after wrapping in a timelock
 	Transactions []BatchChainOperation `json:"transactions"`
+}
+
+func (m *MCMSWithTimelockProposal) Salt() [32]byte {
+	// We need the salt to be unique in case
+	// you use an identical operation again on the same chain
+	// across two different proposals.
+	// Note that the predecessor protects duplicates within a
+	// proposal.
+	var salt [32]byte
+	binary.BigEndian.PutUint32(salt[:], m.ValidUntil)
+	return salt
 }
 
 func NewMCMSWithTimelockProposal(
@@ -172,7 +184,7 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 	for _, t := range m.Transactions {
 		calls := make([]owner.RBACTimelockCall, 0)
 		tags := make([]string, 0)
-		salt := t.Salt
+
 		for _, op := range t.Batch {
 			calls = append(calls, owner.RBACTimelockCall{
 				Target: op.To,
@@ -189,7 +201,7 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 			return mcms.MCMSProposal{}, err
 		}
 
-		operationId, err := hashOperationBatch(calls, predecessor, salt)
+		operationId, err := hashOperationBatch(calls, predecessor, m.Salt())
 		if err != nil {
 			return mcms.MCMSProposal{}, err
 		}
@@ -198,7 +210,7 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 		var data []byte
 		switch m.Operation {
 		case Schedule:
-			data, err = abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
+			data, err = abi.Pack("scheduleBatch", calls, predecessor, m.Salt(), big.NewInt(int64(delay.Seconds())))
 			if err != nil {
 				return mcms.MCMSProposal{}, err
 			}
