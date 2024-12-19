@@ -198,3 +198,25 @@ This is completely independent of the propose-and-execute flow.
 Bypassers create a set of `ManyChainMultiSig.Op`s that calls `RBACTimelock.bypasserExecuteBatch` on
 all relevant `RBACTimelock`s.
 
+## Porting
+
+Developers porting ManyChainMultiSig (MCMS) to new target chains should keep the following considerations in mind.
+
+- If the target chain supports keccak256 and secp256k1, as well as sufficient programmability to mirror the Solidity contract's Merkle tree computations, then the same set of signers as on the Solidity contract can be used. We expect that most target chains will fall in this category as they aim to be compatible with existing Ethereum signing infrastructure.
+This option is recommended, so that signers only have to sign once, and due to the prevalence of `eth_sign` support in hardware wallets, which may be used by the multisig signers.
+- Use distinct domain separators for the Merkle tree leaves for each target chain family to avoid ambiguity.
+  - Use distinct domain separators for metadata, for each target chain family (e.g., `keccak256("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA_SOLANA")`).
+  - Use distinct domain separators for ops, for each target chain family (e.g., `keccak256("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP_SOLANA")`).
+  - This prevents ops and metadata for a chain family from being replayable on another.
+- Preimages of Merkle tree leaves must conform to the following rules:
+  - The domain separator must always be the first word (32 bytes) of any leaf preimage.
+  - The rest of the leaf preimage can be encoded in any way that makes sense for the target chain and language, i.e., does not need to follow the same abi encoding of the Solidity contract.
+  - The encoding must be canonical:
+    - It must not be possible for two distinct metadata to encode to the same value.
+    - It must not be possible for two distinct ops to encode to the same value.
+  - Any leaf preimage must always be of length greater than 64 bytes, to avoid ambiguity with internal nodes.
+- Computation of internal nodes of the Merkle tree must happen identically to the Solidity contract, in order to reuse the Solidity Merkle tree. In particular, the internal node hash should be computed as the commutative keccak256 hash of its two subtree root hashes. See [this snippet](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/e50c24f5839db17f46991478384bfda14acfb830/contracts/utils/cryptography/MerkleProof.sol#L215-L217) from OpenZeppelin for the exact implementation depended upon by the Solidity contract.
+- For chains that have some notion similar to the [EVM chain id](https://eips.ethereum.org/EIPS/eip-155), and where the chain id is available in the target language environment (similar to `block.chainid`), the chain id must be used for both metadata and ops. If such a chain id does not exist, please contact the authors for guidance. We prefer use of chain ids to chain selectors for MCMS because:
+  - Chain ids gracefully handle permanent forks. If an entity decides to fork a chain (e.g., as in the case of Ethereum & Ethereum Classic), it is considered good practice for them to assign a different chain id to their fork to avoid replayability of transactions across forks. In such a scenario, use of chain ids in MCMS avoids replayability of MCMS metadata and ops across forks.
+  - Chain selectors must be configured during deployment, and if misconfigured can cause MCMS metadata and ops to be executable on an unintended chain.
+- If unsure whether a target chain warrants a new chain family, reach out to the authors. Even if two target chains use the same language, they might not belong to the same family (e.g., Aptos & Sui both support Move as a language, but they belong to different chain families). Always ensure that there can never be two chains with the same chain id in the same chain family.
