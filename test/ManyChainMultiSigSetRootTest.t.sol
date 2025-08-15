@@ -383,18 +383,26 @@ contract ManyChainMultiSigSetRootVerifySignaturesTest is ManyChainMultiSigSetRoo
         s_testExposedManyChainMultiSig.setConfig(
             signers, signerGroups, s_testGroupQuorums, s_testGroupParents, false
         );
-        // we build signatures such that the we get 2 signatures from group 0, 1 from group 1, and 3 from group 2.
+
         ManyChainMultiSig.Signature[] memory signatures =
             new ManyChainMultiSig.Signature[](numSignatures);
+        {
+            // 2 signatures from signers in group 1
+            signatures[0] = s_signatures[0];
+            signatures[1] = s_signatures[1];
+            // skip s_signatures[2]
 
-        for (uint256 i = 0; i < signersNum / 3 - 1; i++) {
-            signatures[i] = s_signatures[i];
-        }
-        signatures[signersNum / 3 - 1] = s_signatures[signersNum / 3];
+            // 1 signature from signers in group 2
+            signatures[2] = s_signatures[3];
+            // skip s_signatures[4]
+            // skip s_signatures[5]
 
-        for (uint256 i = (2 * signersNum) / 3; i < signersNum; i++) {
-            signatures[i - 3] = s_signatures[i];
+            // 3 signatures from signers in group 3
+            signatures[3] = s_signatures[6];
+            signatures[4] = s_signatures[7];
+            signatures[5] = s_signatures[8];
         }
+
         // should revert as we have only 1 successful group
         vm.expectRevert(abi.encodeWithSelector(ManyChainMultiSig.InsufficientSigners.selector));
         s_testExposedManyChainMultiSig.setRoot(
