@@ -9,21 +9,18 @@ abigen() {
     go run "$abigen_package_path" "$@"
 }
 
-abigen --version | grep -F "abigen version $abigen_version-stable" >/dev/null || {
+abigen --version | grep -F "abigen version $abigen_version-stable" >/dev/null || (
     echo "ASSERTION: abigen version should have been $abigen_version." 1>&2
     exit 1
-}
+)
 
-abigen_owner_contracts() {
-  abigen --pkg gethwrappers \
-  --abi <(jq .abi ../out/"$1".sol/"$1".json) \
-  --bin  <(jq --raw-output .bytecode.object ../out/"$1".sol/"$1".json) \
-  --type "$1" \
-  --out "$1".go
+improved_abigen () {
+  jq .abi ../out/$1.sol/$1.json > ../out/$1.sol/$1.abi
+  jq --raw-output .bytecode.object ../out/$1.sol/$1.json > ../out/$1.sol/$1.bin
+  go run ./generate/wrap.go ../out/$1.sol/$1.abi ../out/$1.sol/$1.bin $1 gethwrappers
 }
 
 forge build
-abigen_owner_contracts ManyChainMultiSig
-abigen_owner_contracts RBACTimelock
-abigen_owner_contracts CallProxy
-
+improved_abigen CallProxy
+improved_abigen ManyChainMultiSig
+improved_abigen RBACTimelock
