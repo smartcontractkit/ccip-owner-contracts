@@ -3,17 +3,21 @@ name: test
 permissions:
   contents: read
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+
 
 env:
   FOUNDRY_PROFILE: ci
 
 jobs:
-  check:
+  build:
     strategy:
       fail-fast: true
-
-    name: Foundry project
+    name: Foundry build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -29,9 +33,22 @@ jobs:
         run: |
           forge --version
           forge build --sizes
-        id: build
+
+  test:
+    strategy:
+      fail-fast: true
+    name: Foundry test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@50d5a8956f2e319df19e6b57539d7e2acb9f8c1e #pin v1.5.0
+        with:
+          version: nightly
 
       - name: Run Forge tests
         run: |
           forge test --ffi -vvv
-        id: test
