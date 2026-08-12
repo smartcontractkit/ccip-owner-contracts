@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity =0.8.19;
 
+interface IRenounceRole {
+    function renounceRole(bytes32 role, address account) external;
+}
+
 /// @notice a contract which acts as a forwarder that forwards the input from
 /// any caller to a a target contract.
 contract CallProxy {
@@ -14,6 +18,11 @@ contract CallProxy {
     }
 
     fallback() external payable {
+        require(
+            msg.data.length < 4 ||
+                bytes4(msg.data) != IRenounceRole.renounceRole.selector,
+            "CallProxy: renounceRole is blocked"
+        );
         address target = i_target;
         assembly {
             // This code destroys Solidity's memory layout.
