@@ -24,7 +24,7 @@ jobs:
           submodules: recursive
 
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@67d408dce6d39cfcfada695c6921c917218372cd # v1.9.1
+        uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
 
       - name: Run Forge build
         run: |
@@ -42,7 +42,7 @@ jobs:
           submodules: recursive
 
       - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@67d408dce6d39cfcfada695c6921c917218372cd # v1.9.1
+        uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1.9.1
 
       - name: Run Forge tests
         run: |
