@@ -2,7 +2,7 @@
 
 set -e
 
-abigen_version="1.13.8"
+abigen_version="1.17.5"
 abigen_package_path="github.com/ethereum/go-ethereum/cmd/abigen@v$abigen_version"
 
 abigen() {
