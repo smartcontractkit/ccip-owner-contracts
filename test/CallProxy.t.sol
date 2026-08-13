@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import "forge-std/Test.sol";
-import {CallProxy} from "../src/CallProxy.sol";
+import {CallProxy, IRenounceRole} from "../src/CallProxy.sol";
 
 contract CallProxyTest is Test {
     event TargetSet(address target);
@@ -22,6 +22,8 @@ contract CallProxyTest is Test {
     }
 
     function testCall_fuzz(bool expectedSuccess, bytes memory call, bytes memory ret) public {
+        vm.assume(bytes4(call) != IRenounceRole.renounceRole.selector);
+
         if (expectedSuccess) {
             vm.mockCall(MOCK_TARGET_ADDRESS, 0, call, ret);
         } else {
@@ -32,5 +34,14 @@ contract CallProxyTest is Test {
 
         assertEq(result, ret);
         assertEq(expectedSuccess, actualSuccess);
+    }
+
+    function testCall_RevertWhen_RenounceRole(bytes32 role, address account) public {
+        bytes memory call = abi.encodeCall(IRenounceRole.renounceRole, (role, account));
+
+        (bool success, bytes memory result) = address(s_callProxy).call(call);
+
+        assertFalse(success);
+        assertEq(result, abi.encodeWithSignature("Error(string)", "CallProxy: renounceRole is blocked"));
     }
 }
