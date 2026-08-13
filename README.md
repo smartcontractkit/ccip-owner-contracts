@@ -77,6 +77,16 @@ even if an adversary is executing them. Since the adversary can control the gas 
 and gas price, callees are expected to not have gas-dependent behavior other than
 reverting if insufficient gas is supplied.
 
+Being callable by anyone means that any `RBACTimelock` function which authorizes its
+immediate caller is, through the `CallProxy`, authorized for everyone. OpenZeppelin's
+`AccessControl.renounceRole` is such a function: it only requires that the account
+giving up the role is the caller, which through the proxy is the proxy itself. Without
+a guard, anyone could therefore make the `CallProxy` renounce its `EXECUTOR` role. The
+`CallProxy`'s fallback consequently rejects calldata whose selector is
+`renounceRole(bytes32,address)` instead of forwarding it.
+No other `RBACTimelock` function is reachable this way as long as the `CallProxy`
+holds only the `EXECUTOR` role.
+
 The `CallProxy` is not expected to be used with contracts that could `SELFDESTRUCT`. It thus has no
 `EXTCODESIZE`-check prior to making a call. We expect it to be configured correctly (i.e. pointing to a real `RBACTimelock`) on deployment.
 
